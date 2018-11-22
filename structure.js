@@ -1,6 +1,6 @@
 // Structure of the website.
 
-var url_base = "//pluca.web.cern.ch/pluca/";
+var url_base = "//lucapescatore88.github.io/";
 
 structure = [
 {
