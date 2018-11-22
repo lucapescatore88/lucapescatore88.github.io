@@ -1,3 +1,37 @@
+      body {
+        padding-top: 20px;
+        padding-bottom: 40px;
+        background: url('me_alps.jpg');
+        background-size: 100% 100%;
+        background-repeat: no-repeat;
+      }
+
+      .container-narrow {
+        margin: 10px auto;
+        max-width: 1000px;
+        position:relative;
+        background: url('../photos/cream_dust.png') repeat 0 0;
+        padding: 40px;
+        opacity: 0.9;
+        font-family: "Georgia", serif;
+        font-size: 1.2em;
+        
+      }
+      
+      .container-narrow > hr {
+        margin: 30px 0;
+      }
+      .container-narrow > canvas {
+        opacity: 1.0;
+      }
+      
+      canvas {
+        padding: 5px;
+        margin: auto;
+        display: block;
+        opacity: 1.0;
+      }
+
 .circle-container {
     position: relative;
     width: 36em;
