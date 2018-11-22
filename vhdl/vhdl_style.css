@@ -1,0 +1,12 @@
+	 .codeblock {
+		display: block;
+		background: #7FFFD4; 
+		border: 2px;
+		padding: 20px;
+	  }
+
+      body {
+    	background-image : url(../photos/board-bkg.png);
+		background-size: 100% auto;
+		background-repeat: repeat;
+      }

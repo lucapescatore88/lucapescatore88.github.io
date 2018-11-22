@@ -1,0 +1,140 @@
+<html>
+
+<head>
+<title>WebGL - Texture</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+<link rel="stylesheet" href="mystyle.css">
+<link rel="shortcut icon" href="icons/keyboard.ico" />
+
+<script type="text/javascript" src="../assets/js/glMatrix-0.9.5.min.js"></script>
+<script type="text/javascript" src="../assets/js/webgl-utils.js"></script>
+<script type="text/javascript" src="../assets/js/general-webgl-utils.js"></script>
+<script type="text/javascript" src="../assets/js/webgl_shapes.js"></script>
+
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+<script type="text/javascript">
+
+    var text_texture;
+    var text_canvas;
+    
+    var cube = new Shape("Cube");
+
+    var xRot = 0;
+    var yRot = 0;
+    var zRot = 0;
+
+    function drawScene() {
+    
+    	var userinput = document.getElementById('input_text').value;
+        if(userinput!="") {
+        	text_texture = textToTexture(userinput,text_canvas);
+        }
+        else {
+        	var now = new Date();
+			var time = now.getHours() + ':' + now.getMinutes();
+        	text_texture = textToTexture(time,text_canvas);
+        }
+    
+        gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+        gl.useProgram(curShaderProgram);
+        
+        mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
+
+        mat4.identity(mvMatrix);
+        mat4.translate(mvMatrix, [0.0, 0.0, -4.0]);
+        mat4.rotate(mvMatrix, degToRad(xRot), [1, 0, 0]);
+        mat4.rotate(mvMatrix, degToRad(yRot), [0, 1, 0]);
+        mat4.rotate(mvMatrix, degToRad(zRot), [0, 0, 1]);
+		
+		gl.uniform1i(curShaderProgram.useModeUniform, 1);
+		
+		gl.uniform1i(curShaderProgram.useAmbientLighting, true);
+        gl.uniform1i(curShaderProgram.useDirectLighting, true);
+        gl.uniform1i(curShaderProgram.usePointLighting, false);
+        gl.uniform3f(curShaderProgram.ambientColorUniform,0.5,0.5,0.5);
+        var lightingDirection = [-3,-1,-3];
+        var adjustedLD = vec3.create();
+        vec3.normalize(lightingDirection, adjustedLD);
+        vec3.scale(adjustedLD, -1);
+        gl.uniform3fv(curShaderProgram.lightingDirectionUniform, adjustedLD); 
+        gl.uniform3f(curShaderProgram.directionalColorUniform,1.0,1.0,1.0);
+
+		cube.texture = text_texture; 
+		cube.set_texture_id(gl.TEXTURE_2D);
+		cube.draw(gl);
+    }
+
+
+    var lastTime = 0;
+
+    function animate() {
+        var timeNow = new Date().getTime();
+        if (lastTime != 0) {
+            var elapsed = timeNow - lastTime;
+
+            xRot += (90 * elapsed) / 3000.0;
+            yRot += (90 * elapsed) / 3000.0;
+            zRot += (90 * elapsed) / 3000.0;
+        }
+        lastTime = timeNow;
+    }
+
+    function handleKeys() {};
+
+    function webGLStart() {
+        
+        canvas = document.getElementById("mycanvas");
+        loadShaders("../assets/shaders/","textcol","per_frag_light");
+        initGL(canvas);
+        curShaderProgram = createShaderProgram("textcol","per_frag_light",true);
+        
+        text_canvas = document.getElementById("mycanvas2");
+        
+        cube.init(gl); 
+
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.enable(gl.DEPTH_TEST);
+
+        tick();
+    }
+
+</script>
+
+</head>
+
+
+<body onload="webGLStart();">
+
+	<div class="container-narrow" style = "text-align:center;overflow: auto">
+    	<p class="main-title" style="width=100%;display:block;"> Text into texture </p> <br>
+    	
+    	<div style="position:relative;display:table;width:100%;">
+    		
+    		<div style="display:table-cell;vertical-align:middle;text-align:center;"> 
+    			<canvas id="mycanvas2" style="border:none;" width="300" height="300"></canvas>
+    			<div style="margin:1em;">
+    				Write something to display <br>
+    				<input type="text" id="input_text">  
+    			</div>
+    		</div>
+    		
+    		<div style="float:right;position:relative;text-align:center;background-color:rgba(0.,0.,0.,1.);">
+    		<canvas id="mycanvas" style="border:none;background-color:rgba(0.,0.,0.,1.);" width="500" height="500"></canvas>
+    		</div>
+    	</div>
+    	<p style="margin:5mm;">
+        <a class="btn btn-success" href="http://pluca.web.cern.ch/pluca/webgl/webgl_home.html">Go back to WebGL home.</a>
+        <a class="btn btn-success" href="http://pluca.webnode.com/"><span class="glyphicon glyphicon-home" style="margin-right:2px;"></span> Go back to Luca home.</a>
+    	</p>
+    </div>
+    
+</body>
+
+</html>
+

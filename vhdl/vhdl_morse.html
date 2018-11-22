@@ -1,0 +1,362 @@
+<html>
+
+<head>
+<title>VHDL - Morse displayer</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+<link rel="stylesheet" href="//pluca.web.cern.ch/pluca/assets/css/website_style.css">
+<link rel="shortcut icon" href="../photos/board-bkg.ico" />
+<link rel="stylesheet" href="vhdl_style.css">
+
+
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+<script src="//pluca.web.cern.ch/pluca/structure.js"></script>
+
+</head>
+
+
+<body>
+
+	<div class="main_menu" id="main_menu"></div>
+
+	<div class="container-narrow" id="main-content">
+    	<p class="main-title" style="width=100%;display:block;"> Morse code displayer </p> <br>
+    	
+    	<p style="display:block;" >
+    		The board I have has 2 buttons, 6 leds (and a bunch of other stuff). The aim of this project is
+    		to develop a circuit that allows to select one of 4 possible values (A,B,C,D).
+    		This corresponds to a letter in <a href="//en.wikipedia.org/wiki/Morse_code"> morse code</a>. When the value is selected one led is used
+    		to display the morse code.
+    	</p>
+    	
+    	<p style="margin:5mm;width:100%;text-align:center;font-weight:bold;"> The morse final state machine </p>
+    	
+    	<p style="display:block;" >	
+    		This process requires the implementation of a simple final state machine.
+    		A final state is a circuit whose behaviour depends 
+    		on the inputs and on the value of an internal current state.
+    		Two leds (4 and 5) named C and W are used to display the current internal state. 
+    		In this case the states are the following:
+    		<ul>
+    			<li>IDLE: circuit waits for an input and does nothing. C=0 and W=0 </li>
+    			<li>CHOOSING: you are choosing which letter to display. <br>
+    			Leds 0 to 3 are used to identify values 1 to 4 to display. C=1 and W=0 </li>
+    			<li>WRITING: you chose a value and the circuit has to write out its morse code. C=0 and W=1 <br>
+    			Led 0 displays the morse code. Leds 1,2 and 3 are off. 
+    			N.B.: While writing the circuit must be insensitive to any input.  </li>
+    		</ul>
+    		
+    	</p><br>
+    	
+    	<div style="width:100%;text-align:center">
+    	<iframe width="420" height="315" 
+    			src="https://www.youtube.com/embed/K3tMFG9YDqs" frameborder="0" allowfullscreen>
+    	</iframe> 
+    	</div><br>
+    	
+    	<p style="margin-bottom:5mm;">Disclaimer: this is not intended as a VHDL tutorial. But just an explanation
+    	of the examples. If you want to learn VHDL I recommend <a href="http://www.montana.edu/rksnider/courses/ee367_spring_2009/documents/vhdl2005_overview.pdf"> this tutorial </a>. Then you can use
+    	the examples in this page to practice. I'll remind some of the main concepts but read the <a href="http://pluca.web.cern.ch/pluca/vhdl/vhdl_counter.html">counter example</a> first for a more detailed description.<p>
+    	
+    	<div id="main_code">
+    	
+    	<p style="margin-bottom:5mm;">You can download all the files of the project <a href="http://pluca.web.cern.ch/pluca/vhdl/vhdl_code/morse.zip"> here </a> <p>
+    	
+    	<p style="margin:5mm;">
+    	First of all you need to include the libraries you need. In this case just std_logic_1164.
+    	Then the interface of our morse circuite has 3 inputs:
+    	<ul>
+    		<li>A button to change internal state</li>
+    		<li>A button to select the value to display</li>
+    		<li>The clock (50 MHz in this case)</li>
+    	</ul>
+    	
+    	And 6 output leds: 
+    	<ul>
+    		<li> Led 0: to indicate value 1 and to display the morse code</li>
+    		<li> Led 1: to indicate value 2 </li>
+    		<li> Led 2: to indicate value 3 </li>
+    		<li> Led 3: to indicate value 4 </li>
+    		<li> Led 4: to indicate the CHOOSING status</li>
+    		<li> Led 5: to indicate the WRITING status</li>
+    	</ul>
+    	<p>
+    	
+    	<pre class="codeblock">
+library ieee;
+use ieee.std_logic_1164.all;
+
+entity morse_choose is
+    generic(
+               clk_period : time := 20 ns
+           );
+    port(
+            led_write  : OUT std_logic := '1';			-- led for writing state
+            led_choose : OUT std_logic := '1';			-- led for choosing state
+            leds       : OUT std_logic_vector(3 downto 0);	-- the other 4 leds
+            b1,b2      : IN  std_logic;				-- two buttons
+            clk        : IN  std_logic				-- the clock
+        );
+end morse_choose;
+	</pre>
+
+	    <p style="margin:5mm;">
+    	Now let's go to the behaviour of the circuit. In the declaration scope first of all
+    	we find the declaration of a <a href="http://pluca.web.cern.ch/pluca/vhdl/vhdl_button.html"> debounce circuit for the button </a>.
+    	Secondly, there is a type definition for the states of the final state machine. 
+    	<p>
+    	<code>type state is (idle, choosing, writing);</code>
+    	<p style="margin:5mm;">
+    	Represents a definition of a new type with name "state" and 3 possible values: idle, choosing and writing.
+    	Next two signal are defined the current state and the next one.
+    	<p>
+    	
+    	<p style="margin:5mm;">
+    	Then we define:
+    	<ul>
+    		<li> Temporary values for all outputs</li>
+    		<li> <code>ptime</code>, a pre-scale variable</li>
+    		<li> <code>code</code>, the currently chosen morse word. 0 represents dots and 1 lines. E.g. 010 => .-.</li>
+    		<li> <code>lgth</code>, the length of the morse word. E.g. ".--" has length 3, "-..-" length 4.</li>
+    		<li> <code>cpos</code>, an indicator of the current morse character</li>
+    		<li> <code>pchoice</code>, indicating currently chosen value</li>
+			<li> The debounced values of the buttons</li>
+    	</ul>
+    	<p>
+    	<p style="margin:5mm;">
+    	Finally, the beginning of the architecture's body contains the instances of the button components,
+    	connecting them to the right signals.
+    	<p>
+    	
+
+	<pre class="codeblock">
+architecture display_morse of morse_choose is
+
+	component button is				-- debounced button component declaration
+		generic(
+            clk_period : time := 20 ns;		
+			debounce_time : time := 20 ms;	
+			on_state : std_logic := '0'
+           );
+		port(
+            input  : IN std_logic := '1';
+            output : OUT std_logic := '1';
+            clk    : IN  std_logic
+        );
+	end component;
+	
+    type state is (idle, choosing, writing);		-- type "state" definition
+    signal st, next_st   : state := idle;		-- hold the current and next machine states
+    signal lgth          : integer := 0;		-- holds the length of the currently chosen morse word
+    signal code          : std_logic_vector(0 to 3);				
+    signal myleds, wleds : std_logic_vector(3 downto 0) := "1111";
+    signal cleds         : std_logic_vector(3 downto 0) := "1110";
+    signal ptime         : time := 0 ns;		-- prescale variable
+    signal cpos, pchoice : natural := 0;		-- current position in the morse word and current choice
+	signal db1, db2      : std_logic;		-- debounced buttons
+
+begin
+
+	debounced_b1 : button
+		port map( b1, db1, clk );
+		
+	debounced_b2 : button
+		port map( b2, db2, clk );
+
+	</pre>
+	
+	<p style="margin:5mm;width:100%;text-align:center;font-weight:bold;"> The final state machine implementation</p>
+	
+	    <p style="margin:5mm;">
+    		The following process describes the final state machine.
+    		The first "if" acts as a reset to the idle state, which is restored when the
+    		circuit finishes to write the morse word.
+    		Then the circuit checks if the "change state" button was pressed.
+    		If it is the final machine changes state using a <code>when</code> statement:
+    	<ul>
+    		<li> idle => choosing, the choosing led is switched on, the circuit goes to the choosing behaviour.</li>
+    		<li> choosing => writing, the writing led is switched on and <code>lgth</code> and <code>code</code>
+    		are set to the ones of the chosen morse word. The circuit goes to the writing behaviour.</li>
+    		<li> writing => writing, the final state machine awaits for the circuit to finish displaying the morse code.</li>
+    	</ul>
+    	<p>
+	
+	<pre class="codeblock">
+    fsm : process(st,db1,cpos)
+    begin
+
+        if(cpos > lgth-1 and st = writing) then	-- if the position if beyond the length of the word
+            next_st <= idle;			-- return to the idle state
+            led_write <= '1';
+        elsif(db1'event and db1 = '0') then	-- if the button is pressed change the current state
+            case st is
+                when idle =>			-- if idle go to choosing
+                    next_st <= choosing;
+                    led_choose <= '0';		-- switch the led on (remember a low value is needed!)
+                    led_write <= '1';
+                when choosing =>		-- if choosing go to writing and set the chosen word
+                    next_st <= writing;
+                    led_choose <= '1';
+                    led_write <= '0';
+                    case pchoice is
+                        when 0 => 
+                            code <= "0100";	-- A -> ".-" (length = 2, zeros are added to fill the vector)
+                            lgth <= 2;
+                        when 1 => 
+                            code <= "1000";	-- B -> "-..."
+                            lgth <= 4;
+                        when 2 => 
+                            code <= "1010";	-- C -> "-.-."
+                            lgth <= 4;
+                        when 3 => 
+                            code <= "1000";	-- D -> "-.."
+                            lgth <= 3;
+                        when others => 
+                            code <= "0000"; 
+                    end case;
+                when writing =>			-- when writing the inputs are ignored
+                    next_st <= writing;
+            end case;
+        end if;
+    end process;
+
+    st <= next_st; 
+	</pre>
+
+	    <p style="margin:5mm;">
+    		The following process connects the actual leds, <code>leds</code>, to 
+    		the internal variable <code>wleds</code> when writing and <code>cleds</code> when choosing
+    		and switches off all leds when idle. This corresponds to changing the
+    		behaviour of the circuit. In other words the two processes described after
+    		implement the choosing and the writing behaviour. This process here chooses
+    		from which one of those two the current output is taken. 
+    	<p>
+    	
+    <p style="margin:5mm;width:100%;text-align:center;font-weight:bold;"> Switching behaviour </p>
+    	
+	<pre class="codeblock">
+    switch : process(next_st,wleds,cleds)
+    begin
+
+        if(st=writing) then
+            leds <= wleds;
+        elsif(st=choosing) then
+            leds <= cleds;
+        else
+            leds <= "1111";
+        end if;
+    end process;
+	</pre>
+	
+		<p style="margin:5mm;width:100%;text-align:center;font-weight:bold;"> The writing behaviour </p>
+	
+		<p style="margin:5mm;">
+    		The following process defines the behaviour in WRITING state, namely it modifies <code>wleds</code>.
+    		The leds 1,2 and 3 are set off. On the clock edge (and if the current position
+    		in the word is before the word end) the prescale is incremented and the behaviour is the following:
+    		<ul>
+    			<li>If the current morse letter is a line "-" or <code>code(cpos)='1'</code>
+    				then led 0 is set "on" for 800 ms.
+    			</li>
+    			<li>If the current morse letter is a dot "." or <code>code(cpos)='0'</code>
+    				then led 0 is set "on" for 200 ms.
+    			</li>
+    			<li>When the letter is finished the led is set "off" and in both cases it waits further 200 ms to separate the letters.
+    			</li>
+    			<li>When the space after the letter is finished <code>cpos</code> is incremented to display the following letter.
+    			</li>
+    		</ul>
+    	<p>
+
+	<pre class="codeblock">
+    disp : process(clk,st)
+    begin        
+
+        if(st /= writing) then			-- when not writing set all wleds off
+            wleds <= "1111";
+            cpos <= 0;				-- cpos is set to zero
+        elsif (rising_edge(clk)) then
+            wleds(1) <= '1';			-- leds 1,2 and 3 are set off for all the writing time
+            wleds(2) <= '1';
+            wleds(3) <= '1';
+            if(cpos>lgth-1) then		-- if the position is above the length reset the position 
+            					-- to the beginning of the word cpos = 0
+                cpos <= 0;
+            else				-- Line: 800 ms, Dot: 200 ms
+                if((ptime < 800 ms and code(cpos)='1') or (ptime < 200 ms and code(cpos)='0')) then
+                    wleds(0) <= '0';
+                    ptime <= ptime + clk_period;
+                    				-- Space between letters: 200 ms
+                elsif((ptime < 1000 ms and code(cpos)='1') or (ptime < 400 ms and code(cpos)='0')) then 
+                    wleds(0) <= '1';
+                    ptime <= ptime + clk_period;
+                else				-- After the space increment cpos to go to the next letter
+                				-- and reset the prescale
+                    ptime <= 0 ns;
+                    cpos <= cpos + 1;
+                end if;
+            end if;
+        end if;
+
+    end process;
+	</pre>
+	
+		<p style="margin:5mm;width:100%;text-align:center;font-weight:bold;"> The choosing behaviour </p>
+	    <p style="margin:5mm;">
+	    The following process describes the behaviour in CHOOSING state. The process is sensitive to the
+	    "change choice" button. When the choosing button is pressed the variable "choice" is incremented
+	    and the cled of index "choice" is set "on". Notice that since the std_logic_vector is defined
+	    using downto the first led <code>cleds(0)</code> is the one on the right.
+    	</p>
+	
+	<pre class="codeblock">
+    choose : process(db2,st)
+
+        variable choice : natural := 0; 
+    begin        
+
+        if(st /= choosing) then	-- When not in choosing set first cled on
+        			-- to indicate the first choice currently on.
+            cleds <= "1110";
+            choice := 0;
+        elsif(db2'event and db2 = '0') then	-- If the choosing button is pressed
+            if choice < 3 then		-- if choice > 3 go back to the first one
+                choice := choice + 1;	-- increase the choice
+                for i in 0 to leds'length - 1 loop	-- move the led on in "choice" position
+                    if i=choice then
+                        cleds(i) <= '0';
+                    else
+                        cleds(i) <= '1';
+                    end if;
+                end loop;
+            else
+                choice := 0;
+                cleds <= "1110";
+            end if;
+            pchoice <= choice;
+        end if;
+
+    end process;
+
+end display_morse;
+	</pre>
+
+	<br>
+
+    If you have any questions about the examples or VHDL in general feel free to contact me on luca.pescatore@cern.ch.
+        
+	</div>
+    
+    <p style="margin:5mm;">
+        <a class="btn btn-success" href="//pluca.web.cern.ch/pluca/vhdl/vhdl_home.html">Go back to VHDL home.</a>
+        <a class="btn btn-success" href="//pluca.webnode.com/"><span class="glyphicon glyphicon-home" style="margin-right:2px;"></span> Go back to Luca home.</a>
+    </p>
+    
+    </div>
+</body>
+
+</html>
+

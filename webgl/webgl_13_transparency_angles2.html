@@ -1,0 +1,175 @@
+
+<html>
+
+<head>
+<title>WebGL - Transparency</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+<link rel="stylesheet" href="mystyle.css">
+<link rel="shortcut icon" href="icons/keyboard.ico" />
+
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+<script type="text/javascript" src="../assets/js/glMatrix-0.9.5.min.js"></script>
+<script type="text/javascript" src="../assets/js/webgl-utils.js"></script>
+<script type="text/javascript" src="../assets/js/general-webgl-utils.js"></script>
+<script type="text/javascript" src="../assets/js/webgl_shapes.js"></script>
+
+
+<script type="text/javascript">
+
+    var cube = new Shape("Cube");
+    
+	function initBuffers() { cube.init(gl,"../photos/glass.jpg"); }
+
+    var xRot = 0;
+    var xSpeed = 0;
+
+    var yRot = 0;
+    var ySpeed = 0;
+
+    var z = -5.0;
+
+     function drawScene() {
+    
+        var xhttp = new XMLHttpRequest();
+     	xhttp.open("GET", "http://pluca.web.cern.ch/pluca/webgl/angles.php", false);
+     	xhttp.send();
+     	var angles = JSON.parse(xhttp.responseText);
+     	xRot = angles["theta"];
+     	yRot = angles["phi"];
+     
+        gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+        gl.useProgram(curShaderProgram);
+
+        mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
+
+        mat4.identity(mvMatrix);
+
+        mat4.translate(mvMatrix, [curpos[0], 0.0, 0.0]);
+        mat4.translate(mvMatrix, [0.0, curpos[1], 0.0]);
+        mat4.translate(mvMatrix, [0.0, 0.0, z]);
+        mat4.multiply(mvMatrix, rotationMatrix);
+        mat4.rotate(mvMatrix, degToRad(xRot), [1, 0, 0]);
+        mat4.rotate(mvMatrix, degToRad(yRot), [0, 1, 0]);
+
+        gl.uniform1i(curShaderProgram.useAmbientLighting, true);
+        gl.uniform1i(curShaderProgram.useDirectLighting, true);
+        gl.uniform1i(curShaderProgram.usePointLighting, false);
+        
+        var blending = document.getElementById("blending").checked;
+        if (blending) {
+            gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+            gl.enable(gl.BLEND);
+            gl.disable(gl.DEPTH_TEST);
+            gl.uniform1f(curShaderProgram.alphaUniform, parseFloat(document.getElementById("alpha").value));
+            gl.uniform1i(curShaderProgram.useBlending, true);
+        } else {
+            gl.disable(gl.BLEND);
+            gl.enable(gl.DEPTH_TEST);
+            gl.uniform1i(curShaderProgram.useBlending, false);
+        }
+
+        /// Get lighting color
+        gl.uniform3f(
+            curShaderProgram.ambientColorUniform,
+            parseFloat(document.getElementById("ambientR").value),
+            parseFloat(document.getElementById("ambientG").value),
+            parseFloat(document.getElementById("ambientB").value)
+        );
+
+        /// Get lighting direction
+    
+        var lightingDirection = [
+            parseFloat(document.getElementById("directX").value),
+            parseFloat(document.getElementById("directY").value),
+            parseFloat(document.getElementById("directZ").value)
+        ];
+
+        var adjustedLD = vec3.create();
+        vec3.normalize(lightingDirection, adjustedLD);
+        vec3.scale(adjustedLD, -1);
+        gl.uniform3fv(curShaderProgram.lightingDirectionUniform, adjustedLD);
+        
+        gl.uniform3f(
+            curShaderProgram.directionalColorUniform,
+            parseFloat(document.getElementById("directR").value),
+            parseFloat(document.getElementById("directG").value),
+            parseFloat(document.getElementById("directB").value)
+        );
+
+        cube.draw(gl);
+    }
+
+
+    var lastTime = 0;
+
+     function animate() {
+        var timeNow = new Date().getTime();
+        if (lastTime != 0) {
+            var elapsed = timeNow - lastTime;
+
+            xRot += (xSpeed * elapsed) / 1000.0;
+            yRot += (ySpeed * elapsed) / 1000.0;
+        }
+        lastTime = timeNow;
+    }
+
+    var canvas;
+
+    function webGLStart() {
+        canvas = document.getElementById("mycanvas");
+        initGL(canvas);
+        loadShaders("../assets/shaders/","text","per_vtx_light");
+        curShaderProgram = createShaderProgram("text","per_vtx_light",true);
+        initBuffers();
+        
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.enable(gl.DEPTH_TEST);
+
+        tick();
+    }
+
+
+</script>
+
+
+</head>
+
+
+<body onload="webGLStart();">
+
+	<div class="container-narrow" style="text-align:center;">
+    <p class="main-title"> Transparency </p>
+    
+    <canvas id="mycanvas" style="border: none;" width="500" height="500"></canvas>
+    <br>
+    <hr>
+    <input type="checkbox" id="blending">Activate blending<br>
+    <input type="text" id="alpha" value="0.7">Alpha
+    <hr>
+    <!--Angles<br>
+    <input type="text" id="angleTheta" value="0.0">&theta <input type="text" id="anglePhi" value="0.0">&phi <br-->
+    Ambient light color<br>
+    <input type="text" id="ambientR" value="0.0">R <input type="text" id="ambientG" value="0.0">G <input type="text" id="ambientB" value="0.0"> B<br>
+    
+    Directional light direction<br>
+     <input type="text" id="directX" value="-0.25">X <input type="text" id="directY" value="-0.25">Y <input type="text" id="directZ" value="-1"> Z<br>
+    Directional light color<br>
+     <input type="text" id="directR" value="1">R <input type="text" id="directG" value="1">G <input type="text" id="directB" value="1"> B<br>
+
+	    	<p style="margin:5mm;">
+        <a class="btn btn-success" href="http://pluca.web.cern.ch/pluca/webgl/webgl_home.html">Go back to WebGL home.</a>
+        <a class="btn btn-success" href="http://pluca.webnode.com/"><span class="glyphicon glyphicon-home" style="margin-right:2px;"></span> Go back to Luca home.</a>
+    	</p>
+
+	<div>
+
+</body>
+
+</html>
+

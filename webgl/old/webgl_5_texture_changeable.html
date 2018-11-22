@@ -1,0 +1,201 @@
+<html>
+
+<head>
+<title>WebGL - Changeable textures</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+<link rel="stylesheet" href="mystyle.css">
+
+<script type="text/javascript" src="../assets/js/glMatrix-0.9.5.min.js"></script>
+<script type="text/javascript" src="../assets/js/webgl-utils.js"></script>
+<script type="text/javascript" src="../assets/js/general-webgl-utils.js"></script>
+<script type="text/javascript" src="../assets/js/webgl_shapes.js"></script>
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+<script type="text/javascript">
+
+    var cubeVertexPositionBuffer;
+    var cubeVertexTextureCoordBuffer;
+    var cubeVertexIndexBuffer;
+
+    var cube = new Shape("Cube");
+    cube.set_color([1.0,1.0,1.0,1.0]);
+
+    function initBuffers() {
+        cubeVertexPositionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexPositionBuffer);
+        vertices = cube.vertices;
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+        cubeVertexPositionBuffer.itemSize = 3;
+        cubeVertexPositionBuffer.numItems = 24;
+
+        cubeVertexTextureCoordBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexTextureCoordBuffer);
+        var textCoords = cube.textCoords;
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textCoords), gl.STATIC_DRAW);
+        cubeVertexTextureCoordBuffer.itemSize = 2;
+        cubeVertexTextureCoordBuffer.numItems = 24;
+
+        cubeVertexIndexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
+        var cubeVertexIndices = cube.indices;
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(cubeVertexIndices), gl.STATIC_DRAW);
+        cubeVertexIndexBuffer.itemSize = 1;
+        cubeVertexIndexBuffer.numItems = 36;
+    }
+
+
+    var xRot = 0;
+    var yRot = 0;
+    var zRot = 0;
+
+    function drawScene() {
+    
+        gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+        gl.useProgram(curShaderProgram);
+        
+        mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
+
+        mat4.identity(mvMatrix);
+
+        mat4.translate(mvMatrix, [0.0, 0.0, -5.0]);
+
+        mat4.rotate(mvMatrix, degToRad(xRot), [1, 0, 0]);
+        mat4.rotate(mvMatrix, degToRad(yRot), [0, 1, 0]);
+        mat4.rotate(mvMatrix, degToRad(zRot), [0, 0, 1]);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexPositionBuffer);
+        gl.vertexAttribPointer(curShaderProgram.vertexPositionAttribute, cubeVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexTextureCoordBuffer);
+        gl.vertexAttribPointer(curShaderProgram.textureCoordAttribute, cubeVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, textures["luca"]);
+        gl.uniform1i(curShaderProgram.samplerUniform, 0);
+
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
+        setMatrixUniforms();
+        gl.drawElements(gl.TRIANGLES, cubeVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+    }
+
+
+    var lastTime = 0;
+
+    function animate () {
+        var timeNow = new Date().getTime();
+        if (lastTime != 0) {
+            var elapsed = timeNow - lastTime;
+
+            xRot += (90 * elapsed) / 1000.0;
+            yRot += (90 * elapsed) / 1000.0;
+            zRot += (90 * elapsed) / 1000.0;
+        }
+        lastTime = timeNow;
+    }
+
+    function handleKeys () {}
+
+    function webGLStart() {
+        var canvas = document.getElementById("mycanvas");
+        initGL(canvas);
+        loadShaders("../assets/shaders/","text","no_light");
+        curShaderProgram = createShaderProgram("text","no_light");
+        initBuffers();
+        initTexture("luca","../uploads/me_alps.jpg");
+
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.enable(gl.DEPTH_TEST);
+
+        tick();
+    }
+
+
+</script>
+
+
+</head>
+
+<body onload="webGLStart();">
+
+    <div class="container-narrow">
+    <p class="main-title"> Changeable texture </p>
+    <canvas id="mycanvas" style="border: none;" width="500" height="500"></canvas>
+    <br>Change the image!
+
+	<br>
+	<br>
+	<form id="file-form" method="POST" enctype="multipart/form-data">
+        <input type="file" id="file-select" name="file_to_upload"/>
+        <button type="button" id="upload-button">Upload</button>
+    </form>
+    
+    <progress id="progressBar" min="0" max="100" value="0"></progress>
+
+    <br>
+    <!--button onclick="useUploaded()">Use uploaded image</button><br>
+     <a href="uploads/astra.png" download>Download</a><br>
+     <!--form method="get" action="uploads/astra.png">
+    <button type="submit">Download!</button-->
+	</div>
+
+<script>
+
+var curfile;
+    
+function completeHandler()  {
+   
+        alert("File uploaded");
+        $('#progressBar').attr({value:0});
+        $(':button').html("Upload");
+        console.log($('#file-select').get("file_to_upload"));
+        //initTexture("luca","uploads/"+localStorage.getItem("curfile"));
+        
+}   
+
+function progressHandler(e)  {
+    if(e.lengthComputable)
+    {
+        $(':button').html("Uploading...");
+        $('#progressBar').attr({value:e.loaded,max:e.total});
+    }
+    
+}
+
+$(':button').click( function(){
+
+    var formData = new FormData($('form')[0]);
+    $.ajax({
+        url: '../assets/php/upload.php',  
+        type: 'POST',
+        xhr: function() {  
+                    myXhr = $.ajaxSettings.xhr();
+                    if(myXhr.upload){ 
+                        myXhr.upload.addEventListener('progress', progressHandler, false); // progressbar
+                    }
+                    return myXhr;
+                },
+
+        success: function ()  {
+   
+            $('#progressBar').attr({value:0});
+            $(':button').html("Upload");
+            initTexture("luca","../uploads/"+$('#file-select')[0].files[0]['name']);
+        }  ,
+        
+        data: formData,
+
+        cache: false,
+        contentType: false,
+        processData: false
+        });
+});
+   
+</script>
+</body>
+
+</html>
+

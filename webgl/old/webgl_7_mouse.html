@@ -1,0 +1,263 @@
+<html>
+
+<head>
+<title>WebGL - Mouse driven cube</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+<link rel="stylesheet" href="mystyle.css">
+
+<script type="text/javascript" src="../assets/js/glMatrix-0.9.5.min.js"></script>
+<script type="text/javascript" src="../assets/js/webgl-utils.js"></script>
+<script type="text/javascript" src="../assets/js/general-webgl-utils.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+<script type="text/javascript" src="../assets/js/webgl_shapes.js"></script>
+
+<script type="text/javascript">
+
+    var cubeVertexPositionBuffer;
+    var cubeVertexColorBuffer;
+    var cubeVertexIndexBuffer;
+
+
+    var cube = new Shape("Cube");
+
+    function initBuffers() {
+        cubeVertexPositionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexPositionBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(cube.vertices), gl.STATIC_DRAW);
+        cubeVertexPositionBuffer.itemSize = 3;
+        cubeVertexPositionBuffer.numItems = 24;
+
+        cubeVertexColorBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexColorBuffer);
+        var colors=[];
+        var col = 
+        [
+            [1.,0.,0.,1.],
+            [0.,1.,0.,1.],
+            [0.,0.,1.,1.]
+        ]
+        for (var i in col)
+        {
+            var color = col[i];
+            for (var j = 0; j < 4; j++)
+            {
+                colors = colors.concat(color);
+            }
+            for (var k = 0; k < 4; k++)
+            {
+                colors = colors.concat(color);
+            }
+        }
+        
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+        cubeVertexColorBuffer.itemSize = 4;
+        cubeVertexColorBuffer.numItems = 24;
+
+        cubeVertexIndexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(cube.indices), gl.STATIC_DRAW);
+        cubeVertexIndexBuffer.itemSize = 1;
+        cubeVertexIndexBuffer.numItems = 36;
+    }
+
+
+    var xRot = 0;
+    var xSpeed = 0;
+
+    var yRot = 0;
+    var ySpeed = 0;
+
+    var z = -5.0;
+
+     function drawScene() {
+        gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+        gl.useProgram(curShaderProgram);
+
+        mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
+
+        mat4.identity(mvMatrix);
+
+        mat4.translate(mvMatrix, [curpos[0], 0.0, 0.0]);
+        mat4.translate(mvMatrix, [0.0, curpos[1], 0.0]);
+        mat4.translate(mvMatrix, [0.0, 0.0, z]);
+        mat4.multiply(mvMatrix, rotationMatrix);
+        mat4.rotate(mvMatrix, degToRad(xRot), [1, 0, 0]);
+        mat4.rotate(mvMatrix, degToRad(yRot), [0, 1, 0]);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexPositionBuffer);
+        gl.vertexAttribPointer(curShaderProgram.vertexPositionAttribute, cubeVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexColorBuffer);
+        gl.vertexAttribPointer(curShaderProgram.vertexColorAttribute, cubeVertexColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
+        setMatrixUniforms();
+        gl.drawElements(gl.TRIANGLES, cubeVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+    }
+
+
+    var lastTime = 0;
+
+     function animate() {
+        var timeNow = new Date().getTime();
+        if (lastTime != 0) {
+            var elapsed = timeNow - lastTime;
+
+            xRot += (xSpeed * elapsed) / 1000.0;
+            yRot += (ySpeed * elapsed) / 1000.0;
+        }
+        lastTime = timeNow;
+    }
+
+    var curcolor = 0;
+    var poss_colors = [
+        [
+            [0.5,0.,0.,1.],
+            [0.,0.5,0.,1.],
+            [0.,0.,0.5,1.]
+        ],
+        [
+            [1.,0.,0.,1.],
+            [0.,1.,0.,1.],
+            [0.,0.,1.,1.]
+        ],
+        [
+            [0.8,0.8,0.8,1.],
+            [0.2,0.2,0.2,1.],
+            [0.5,0.5,0.5,1.]
+        ]
+    ]
+    
+    function changeColor()
+    {
+        gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexColorBuffer);
+        var colors=[];
+        var col = poss_colors[curcolor];
+        if(curcolor<2) curcolor+=1;
+        else curcolor = 0;
+        
+        for (var i in col)
+        {
+            var color = col[i];
+            for (var j = 0; j < 4; j++)
+            {
+                colors = colors.concat(color);
+            }
+            for (var k = 0; k < 4; k++)
+            {
+                colors = colors.concat(color);
+            }
+        }
+        
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+    }
+
+    var lastC = 0.;
+    
+    function handleKeys () {
+    if (currentlyPressedKeys[65]) {
+      // A
+      z -= 0.05;
+    }
+    if (currentlyPressedKeys[68]) {
+      //D
+      z += 0.05;
+    }
+    if (currentlyPressedKeys[37]) {
+      // Left cursor key
+      ySpeed -= 1;
+    }
+    if (currentlyPressedKeys[39]) {
+      // Right cursor key
+      ySpeed += 1;
+    }
+    if (currentlyPressedKeys[38]) {
+      // Up cursor key
+      xSpeed -= 1;
+    }
+    if (currentlyPressedKeys[40]) {
+      // Down cursor key
+      xSpeed += 1;
+    }
+    if (currentlyPressedKeys[67]) {
+      // C
+        var timeNow = new Date().getTime();
+        var elapsed = timeNow - lastC;
+        if (lastC == 0. || elapsed > 200.0) {
+            changeColor();
+            lastC = timeNow;
+        }
+    }
+}
+
+    handleMouseDown = function(event) {
+        mouseDown = true;
+        lastMouse = [ event.clientX, event.clientY ];
+        
+        if(document.getElementById("rotate").checked) {
+            xSpeed = 0;
+            ySpeed = 0;
+        }
+    }
+
+
+    function handleMouseMove(event)
+    {
+        if(document.getElementById("translate").checked)
+        {
+            handleMouseMoveTranslate(event);
+        }
+        else
+        {
+            handleMouseMoveRotate(event);
+        }
+    }
+
+
+    var canvas;
+
+    function webGLStart() {
+        canvas = document.getElementById("mycanvas");
+        initGL(canvas);
+        loadShaders("../assets/shaders/","col","no_light");        
+        curShaderProgram = createShaderProgram("col","no_light");
+        initBuffers();
+
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.enable(gl.DEPTH_TEST);
+
+        document.onkeydown = handleKeyDown;
+        document.onkeyup = handleKeyUp;
+        canvas.onmousedown = handleMouseDown;
+        document.onmouseup = handleMouseUp;
+        document.onmousemove = handleMouseMove;
+
+        tick();
+    }
+
+
+</script>
+
+
+</head>
+
+
+<body onload="webGLStart();">
+
+<div class="container-narrow">
+    <p class="main-title"> Mouse driven cube </p>
+    <canvas id="mycanvas" style="border: none;" width="500" height="500"></canvas>
+    <br>
+    Choose if the mouse does a translation or rotation action.
+    <br>
+    <input type="radio" name="mouseact" id="translate" checked="checked">Translate<br>
+    <input type="radio" name="mouseact" id="rotate">Rotate<br>
+</div>
+
+</body>
+
+</html>
+

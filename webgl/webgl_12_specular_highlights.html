@@ -1,0 +1,270 @@
+<html>
+
+<head>
+<title>WebGL - Complex lighting</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+<link rel="stylesheet" href="mystyle.css">
+<link rel="shortcut icon" href="icons/keyboard.ico" />
+
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+<script type="text/javascript" src="../assets/js/glMatrix-0.9.5.min.js"></script>
+<script type="text/javascript" src="../assets/js/webgl-utils.js"></script>
+<script type="text/javascript" src="../assets/js/general-webgl-utils.js"></script>
+<script type="text/javascript" src="../assets/js/webgl_shapes.js"></script>
+
+<script>
+function setValue(id,value)
+{
+    var name = id.replace("range_","");
+    $("#"+name+"R").attr("value",Number(value).toString());
+    $("#"+name+"G").attr("value",Number(value).toString());
+    $("#"+name+"B").attr("value",Number(value).toString());
+}
+</script>
+
+
+
+<script type="text/javascript">
+
+    var vertexPositionBuffer;
+    var vertexTextureCoordBuffer;
+    var vertexIndexBuffer;
+    var vertexNormalBuffer;
+    var vertexColorBuffer;
+    
+    var sphere = new Shape("Sphere");
+    sphere.set_color([1.0,1.0,1.0,1.0]);
+    
+    function initBuffers() {
+        
+        sphere.init(gl,"../photos/earth.jpg");
+    }
+
+
+    xRot = -205.;
+    xSpeed = 0;
+
+    yRot = 70.;
+    ySpeed = 0;
+
+    curpos[2] = -25.0;
+
+     function drawScene() {
+        gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+        gl.useProgram(curShaderProgram);
+
+        mat4.perspective(10, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
+
+        mat4.identity(mvMatrix);
+
+        mat4.translate(mvMatrix, curpos);
+        mat4.multiply(mvMatrix, rotationMatrix);
+        mat4.rotate(mvMatrix, degToRad(xRot), [1, 0, 0]);
+        mat4.rotate(mvMatrix, degToRad(yRot), [0, 1, 0]);
+
+        var curmode = document.getElementById("mode").value;
+        gl.uniform1i(curShaderProgram.useModeUniform, parseFloat(curmode));
+
+        var blending = document.getElementById("blending").checked;
+        if (blending) {
+            gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+            gl.enable(gl.BLEND);
+            gl.disable(gl.DEPTH_TEST);
+            gl.uniform1f(curShaderProgram.alphaUniform, parseFloat(document.getElementById("alpha").value));
+            gl.uniform1i(curShaderProgram.useBlending, true);
+        } else {
+            gl.disable(gl.BLEND);
+            gl.enable(gl.DEPTH_TEST);
+            gl.uniform1i(curShaderProgram.useBlending, false);
+        }
+
+        /// Get lighting info
+
+        var useSpecular = document.getElementById("use_spec").checked;
+        gl.uniform1i(curShaderProgram.useSpecularLighting, useSpecular);
+        var useDirect = document.getElementById("use_direct").checked;
+        gl.uniform1i(curShaderProgram.useDirectLighting, useDirect);
+        var useAmbient = document.getElementById("use_ambient").checked;
+        gl.uniform1i(curShaderProgram.useAmbientLighting, useAmbient);
+        var usePoint = document.getElementById("use_point").checked;
+        gl.uniform1i(curShaderProgram.usePointLighting, usePoint);
+        var useEmissive = document.getElementById("emissive").checked;
+        gl.uniform1i(curShaderProgram.useEmissiveLighting, useEmissive);
+        var emissivity = parseFloat(document.getElementById("emissivity").value);
+        gl.uniform1f(curShaderProgram.emissivityUniform, emissivity);
+
+        var shine = parseFloat(document.getElementById("shininess").value);
+        gl.uniform1f(curShaderProgram.shineUniform, shine);
+
+        gl.uniform3f(
+            curShaderProgram.ambientColorUniform,
+            parseFloat(document.getElementById("ambientR").value),
+            parseFloat(document.getElementById("ambientG").value),
+            parseFloat(document.getElementById("ambientB").value)
+        );
+
+        /// Get lighting direction
+    
+        var lightingDirection = [
+            parseFloat(document.getElementById("directX").value),
+            parseFloat(document.getElementById("directY").value),
+            parseFloat(document.getElementById("directZ").value)
+        ];
+
+        var adjustedLD = vec3.create();
+        vec3.normalize(lightingDirection, adjustedLD);
+        vec3.scale(adjustedLD, -1);
+        gl.uniform3fv(curShaderProgram.lightingDirectionUniform, adjustedLD);
+        
+        gl.uniform3f(
+            curShaderProgram.directionalColorUniform,
+            parseFloat(document.getElementById("directR").value),
+            parseFloat(document.getElementById("directG").value),
+            parseFloat(document.getElementById("directB").value)
+        );
+        
+        var pointPosition = [
+            parseFloat(document.getElementById("pointX").value),
+            parseFloat(document.getElementById("pointY").value),
+            parseFloat(document.getElementById("pointZ").value)
+        ];
+
+        gl.uniform3fv(curShaderProgram.pointPositionUniform, pointPosition);
+        
+        var pointColor = [
+            parseFloat(document.getElementById("pointR").value),
+            parseFloat(document.getElementById("pointG").value),
+            parseFloat(document.getElementById("pointB").value)
+        ];
+
+        gl.uniform3fv(curShaderProgram.pointColorUniform, pointColor);
+        
+        sphere.draw(gl);
+    }
+
+
+    var lastTime = 0;
+
+     function animate() {
+        var timeNow = new Date().getTime();
+        if (lastTime != 0) {
+            var elapsed = timeNow - lastTime;
+
+            xRot += (xSpeed * elapsed) / 1000.0;
+            yRot += (ySpeed * elapsed) / 1000.0;
+        }
+        lastTime = timeNow;
+    }
+
+    function handleKeys () {
+            zoomRotate();
+            //zoomTranslate();
+            //camera();
+    }
+
+
+    function handleMouseMove(event)
+    {
+        if(document.getElementById("translate").checked)
+        {
+            handleMouseMoveTranslate(event);
+        }
+        else
+        {
+            handleMouseMoveRotate(event);
+        }
+    }
+
+    var canvas;
+
+    function webGLStart() {
+        canvas = document.getElementById("mycanvas");
+        initGL(canvas);
+        loadShaders("../assets/shaders/","textcol","per_frag_light");
+        curShaderProgram = createShaderProgram("textcol","per_frag_light",true);
+        initBuffers();
+
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.enable(gl.DEPTH_TEST);
+
+        document.onkeydown = handleKeyDown;
+        document.onkeyup = handleKeyUp;
+        canvas.onmousedown = handleMouseDown;
+        document.onmouseup = handleMouseUp;
+        document.onmousemove = handleMouseMove;
+
+        tick();
+    }
+
+
+</script>
+
+
+</head>
+
+
+<body onload="webGLStart();" >
+
+	<div class="container-narrow">
+    <p class="main-title"> Complex lighting </p>
+
+    Push arrows to rotate the sphere or use the mouse to move it or rotate it. <br>
+    <div style="text-align:center">
+        <canvas id="mycanvas" style="border: none;" width="1000" height="500"></canvas>
+    </div>
+    <br>
+    Choose if the mouse does a translation or rotation action.
+    <br>
+    <input type="radio" name="mouseact" id="translate" checked="checked">Translate<br>
+    <input type="radio" name="mouseact" id="rotate">Rotate<br>
+    <hr>
+    <select id="mode">
+    <option value="1">Texture</option>
+    <option value="0">No texture</option>
+    <option value="2">Colored texture</option>
+    </select>
+    <hr>
+    <input type="checkbox" id="blending" >Activate blending<br>
+    <input type="checkbox" id="emissive" >Emissive<br>
+    <input type="text" id="emissivity" value="20.0">Emissivity<br>
+    <input type="text" id="alpha" value="0.7">Alpha<br>
+    <input type="text" id="shininess" value="30.">Shininess  <input type="checkbox" id="use_spec">Use specular highlights<br>
+    <hr>
+    Ambient light color<br>
+    <input type="text" id="ambientR" value="0.2">R <input type="text" id="ambientG" value="0.2">G <input type="text" id="ambientB" value="0.2"> B
+    <input type="checkbox" id="use_ambient" checked="true">Switch on/of</input>
+    <input type="range"  id="range_ambient" min="0" max="1" value="0.2" step="0.01" onchange="setValue(this.id,this.value);"/><br>
+    
+    <hr>
+    Directional light direction<br>
+     <input type="text" id="directX" value="-0.25">X <input type="text" id="directY" value="-0.25">Y <input type="text" id="directZ" value="-1"> Z <br>
+    Directional light color<br>
+     <input type="text" id="directR" value="0">R <input type="text" id="directG" value="0">G <input type="text" id="directB" value="0"> B
+     <input type="checkbox" id="use_direct">Switch on/of</input>
+     <input type="range"  id="range_direct" min="0" max="1" value="0" step="0.01" onchange="setValue(this.id,this.value);"/><br>
+
+    <hr>
+    Point light position<br>
+     <input type="text" id="pointX" value="0">X <input type="text" id="pointY" value="0">Y <input type="text" id="pointZ" value="-5"> Z<br>
+    Point light color<br>
+     <input type="text" id="pointR" value="0.8">R <input type="text" id="pointG" value="0.8">G <input type="text" id="pointB" value="0.8"> B
+     <input type="checkbox" id="use_point" checked="true">Switch on/of</input>
+     <input type="range"  id="range_point" min="0" max="1" value="0.8" step="0.01" onchange="setValue(this.id,this.value);"/><br>
+     
+        <p style="margin:5mm;">
+        <a class="btn btn-success" href="http://pluca.web.cern.ch/pluca/webgl/webgl_home.html">Go back to WebGL home.</a>
+        <a class="btn btn-success" href="http://pluca.webnode.com/"><span class="glyphicon glyphicon-home" style="margin-right:2px;"></span> Go back to Luca home.</a>
+    	</p>
+     
+     </div>
+     
+     </body>
+
+</html>
+

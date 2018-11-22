@@ -1,0 +1,138 @@
+<html>
+
+<head>
+<title>VHDL - Debounced button</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+<link rel="stylesheet" href="//pluca.web.cern.ch/pluca/assets/css/website_style.css">
+<link rel="shortcut icon" href="../photos/board-bkg.ico" />
+<link rel="stylesheet" href="vhdl_style.css">
+
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+<script src="//pluca.web.cern.ch/pluca/structure.js"></script>
+
+</head>
+
+
+<body> 
+
+	<div class="main_menu" id="main_menu"></div>
+
+	<div class="container-narrow" id="main-content">
+    	<p class="main-title" style="width=100%;display:block;"> Debounced button </p> <br>
+    	
+    	<p style="display:block;" >
+    		Real life buttons and fingers pushing them tend not to be perfect.
+    		They fluctuate a bit before settling in a state.
+			Therefore a "debounce" circuit is often essential, which given a button input produces
+			a stable output. In practice it changes output only if the input is stable for a certain
+			amount of time. Here you find how this is realised in VHDL.
+    	</p><br>
+    	
+    	<div style="width:100%;text-align:center">
+    	<img src="../photos/button-image.jpg" width=200px></img>
+    	</div><br>
+    	
+    	<p style="margin-bottom:5mm;">Disclaimer: this is not intended as a VHDL tutorial. But just an explanation
+    	of the examples. If you want to learn VHDL I recommend <a href="//www.montana.edu/rksnider/courses/ee367_spring_2009/documents/vhdl2005_overview.pdf"> this tutorial </a>. Then you can use
+    	the examples in this page to practice. Nevertheless I'll remind some of the main concepts.<p>
+    	
+    	<div id="main_code">
+    	
+    	<p style="margin-bottom:5mm;">You can download all the files of the project <a href="http://pluca.web.cern.ch/pluca/vhdl/vhdl_code/button.html"> here </a> <p>
+    	
+		<p style="margin:5mm;">
+    	First of all here is the inclusion of the needed libraries.
+    	And the declaration of the circuit interface. We need just an input, an output and a clock.
+    	A few generic are also defined to make the button customisable: the clock period, the time after which the signal
+    	is considered stable and the "pushed state" (does the push button correspond to a low or high value? In my case low.)
+    	</p>
+
+		<pre class="codeblock">
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_unsigned.all;
+
+entity button is        		-- Debounced button with a 20 ms debounce time.
+    generic(
+        clk_period : time := 20 ns;	-- clock period
+        debounce_time : time := 20 ms;	-- time after which the signal is considered stable
+        on_state : std_logic := '0'	-- pushed state (vs rest state)
+           );
+    port(
+    	input  : IN std_logic := '1';
+    	output : OUT std_logic := '1';
+    	clk    : IN  std_logic
+        );
+end button;
+</pre>
+
+		<p style="margin:5mm;">
+    	The architecture uses a counter do measure time and 
+    	defines the debounce behaviour using a simple "if" statement in the following way:
+    		<ul>
+    			<li><code>input</code> represents the current input 
+    			and <code>state</code> the input at the previous cycle;
+    			</li>
+    			<li>in the input changes reset the counter otherwise keep counting; keep the output in "off"
+    			</li>
+    			<li>if the counter gets exactly to the debounce time go to "on" (for only one cycle)
+    			</li>
+    			<li>if the counter is above the debounce time or the button is in rest position keep it in "off" 
+    			</li>
+    		</ul> 
+    		N.B.: This button is defined such that if pressed it produces a "on" signal only for a single cycle.
+    		In other words if you keep the button pressed after debounce time it will be ignored until it is released.
+    		This may not be the behaviour you need. In that case you'll need to change a bit the "else" part of the architecture.
+    	</p>
+
+<pre class="codeblock">
+architecture debounced_button of button is
+
+constant deb_cycles : integer := debounce_time / clk_period;	-- number of clock cycles in the debounce time
+signal count : integer range 0 to (deb_cycles + 1) := 0;
+signal state : std_logic := '0';
+
+begin
+
+	process(input, clk)
+	begin
+		if(rising_edge(clk)) then
+			if (input /= state) then	-- if the state changed reset the counter
+				count <= 0;
+				output <= not on_state;
+			elsif (count < deb_cycles) then	-- if the change isn't changed and 20 ms aren't passed increase the counter
+				count <= count + 1;
+				output <= not on_state;
+			elsif (count = deb_cycles and input = on_state) then	-- 20 ms of stability! 
+										--> output the "on state"
+				count <= count + 1;
+				output <= on_state;
+			else				-- If the button is not pressed or the 20 ms 
+				output <= not on_state;	-- are passed and the button is still pressed  
+							-- keep it in off state.
+			end if;	
+		state <= input;
+	end if;
+	end process;
+	
+end debounced_button;
+
+		</pre>
+		        
+         <p style="margin:5mm;">
+        <a class="btn btn-success" href="//pluca.web.cern.ch/pluca/vhdl/vhdl_home.html">Go back to VHDL home.</a>
+        <a class="btn btn-success" href="//pluca.webnode.com/"><span class="glyphicon glyphicon-home" style="margin-right:2px;"></span> Go back to Luca home.</a>
+        </p><br>
+        If you have any questions about the examples or VHDL in general feel free to contact me on luca.pescatore@cern.ch.
+        
+	</div>
+    
+    </div>
+</body>
+
+</html>
+

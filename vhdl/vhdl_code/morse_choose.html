@@ -1,0 +1,177 @@
+<html>
+<body>
+<pre>
+library ieee;
+use ieee.std_logic_1164.all;
+
+entity morse_choose is
+    generic(
+               clk_period : time := 20 ns
+           );
+    port(
+            led_write  : OUT std_logic := '1';
+            led_choose : OUT std_logic := '1';
+            leds       : OUT std_logic_vector(3 downto 0);
+            b1,b2      : IN  std_logic;
+            clk        : IN  std_logic
+        );
+end morse_choose;
+
+
+architecture display_morse of morse_choose is
+
+	component button is
+		generic(
+               clk_period : time := 20 ns;
+					debounce_time : time := 20 ms;
+					on_state : std_logic := '0'
+           );
+		port(
+            input  : IN std_logic := '1';
+            output : OUT std_logic := '1';
+            clk    : IN  std_logic
+        );
+	end component;
+	
+    type state is (idle, choosing, writing);
+    signal st, next_st   : state := idle;
+    signal lgth          : integer := 0;
+    signal code          : std_logic_vector(0 to 3);
+    signal myleds, wleds : std_logic_vector(3 downto 0) := "1111";
+    signal cleds         : std_logic_vector(3 downto 0) := "1110";
+    signal ptime         : time := 0 ns;
+    signal cpos, pchoice : natural := 0;
+	 signal db1, db2      : std_logic;
+
+begin
+
+	debounced_b1 : button
+		port map( b1, db1, clk );
+		
+	debounced_b2 : button
+		port map( b2, db2, clk );
+
+    fsm : process(st,db1,cpos)
+    begin
+
+        if(cpos > lgth-1 and st = writing) then
+            report "Finished morse" severity note;
+            next_st <= idle;
+            led_write <= '1';
+        elsif(db1'event and db1 = '0') then
+            case st is
+                when idle =>
+                    next_st <= choosing;
+                    led_choose <= '0';
+                    led_write <= '1';
+                    report "B1 pressed to go to choose" severity note;
+                when choosing =>
+                    report "B1 pressed to go to write" severity note;
+                    next_st <= writing;
+                    led_choose <= '1';
+                    led_write <= '0';
+                    case pchoice is
+                        when 0 => 
+                            code <= "0100";
+                            lgth <= 2;
+                        when 1 => 
+                            code <= "1000";
+                            lgth <= 4;
+                        when 2 => 
+                            code <= "1010";
+                            lgth <= 4;
+                        when 3 => 
+                            code <= "1000";
+                            lgth <= 3;
+                        when others => 
+                            code <= "0000"; 
+                    end case;
+                when writing =>
+                    next_st <= writing;
+            end case;
+        end if;
+    end process;
+
+    st <= next_st; 
+
+    switch : process(next_st,wleds,cleds)
+    begin
+
+        if(st=writing) then
+            leds <= wleds;
+            report "Writing ";
+        elsif(st=choosing) then
+            leds <= cleds;
+            report "Choosing ";
+        else
+            leds <= "1111";
+        end if;
+    end process;
+
+    disp : process(clk,st)
+    begin        
+
+        if(st /= writing) then
+            wleds <= "1111";
+            cpos <= 0;
+        elsif (rising_edge(clk)) then
+            wleds(1) <= '1';
+            wleds(2) <= '1';
+            wleds(3) <= '1';
+            if(cpos>lgth-1) then
+                cpos <= 0;
+                report "Finished morse reset" severity note;
+            else
+                if((ptime < 800 ms and code(cpos)='1') or (ptime < 200 ms and code(cpos)='0')) then
+                --if((ptime < 100 ns and code(cpos)='1') or (ptime < 30 ns and code(cpos)='0')) then
+                    wleds(0) <= '0';
+                    ptime <= ptime + clk_period;
+                elsif((ptime < 1000 ms and code(cpos)='1') or (ptime < 400 ms and code(cpos)='0')) then
+                --elsif((ptime < 120 ns and code(cpos)='1') or (ptime < 50 ns and code(cpos)='0')) then 
+                    wleds(0) <= '1';
+                    ptime <= ptime + clk_period;
+                else
+                    ptime <= 0 ns;
+                    cpos <= cpos + 1;
+                end if;
+            end if;
+        end if;
+
+    end process;
+
+    choose : process(db2,st)
+
+        variable choice : natural := 0; 
+    begin        
+
+        if(st /= choosing) then
+            cleds <= "1110";
+            choice := 0;
+        elsif(db2'event and db2 = '0') then
+            report "B2 pressed" severity note;
+            if choice < 3 then
+                choice := choice + 1;
+                for i in 0 to leds'length - 1 loop
+                    if i=choice then
+                        cleds(i) <= '0';
+                    else
+                        cleds(i) <= '1';
+                    end if;
+                end loop;
+            report "Current choice " & integer'image(choice);
+            else
+                report "B2 pressed reset" severity note;
+                choice := 0;
+                cleds <= "1110";
+            end if;
+            pchoice <= choice;
+        end if;
+
+    end process;
+
+
+end display_morse;
+
+</pre>
+</body>
+</html>

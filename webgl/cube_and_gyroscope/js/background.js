@@ -1,0 +1,1 @@
+$.backstretch("../../img/DSC07687.JPG");

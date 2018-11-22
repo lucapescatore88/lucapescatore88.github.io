@@ -1,0 +1,328 @@
+<html>
+
+<head>
+<title>VHDL - counter</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+<link rel="shortcut icon" href="../photos/board-bkg.ico" />
+
+<link rel="stylesheet" href="//pluca.web.cern.ch/pluca/assets/css/website_style.css">
+<link rel="stylesheet" href="vhdl_style.css">
+
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+<script src="//pluca.web.cern.ch/pluca/structure.js"></script>
+
+</head>
+
+
+<body>
+
+	<div class="main_menu" id="main_menu"></div>
+
+	<div class="container-narrow" id="main-content">
+    	<p class="main-title" style="width=100%;display:block;"> Two direction counter </p> <br>
+    	
+    	<div style="display:block;width=100%;position:relative;">
+    		<div style="width=100%;margin-bottom:20px;">
+    			The board I have has 2 buttons, 6 leds and the aim of this project is to develop a counter with the following features:
+    		</div>
+    		
+    		<img style="float:right;" src="../photos/7bits.png" width=120px></img>
+    		<p>
+    			<ul >
+    				<li>Displays the count in binary using the 6 leds</li>
+    				<li>Button 1 changes the counting direction (makes it count backwards)</li>
+    				<li>Button 2 resets the count. (to 0 is counting up ot to 2<sup>6</sup> - 1 = 63 if counting down)</li>
+    			</ul> 
+    			Extra features
+    			<ul>
+    				<li>I made the counter general so that is counts modulo-k</li>
+    				<li>I added a component that converts the current count number in the output for a 7 lines displayer with 2 digits (like a digital alarm).</li>
+    			</ul>
+    		</p>
+    		
+    	
+    	<div style="width:100%;text-align:center;position:relative;top:10px;clear:both;">
+    	<iframe width="420" height="315" 
+    			src="https://www.youtube.com/embed/X1TEV7zgaOA" frameborder="0" allowfullscreen>
+    	</iframe> 
+    	</div><br>
+    	
+    	<p style="margin-bottom:5mm;">Disclaimer: this is not intended as a VHDL tutorial. But just an explanation
+    	of the examples. If you want to learn VHDL I recommend <a href="http://www.montana.edu/rksnider/courses/ee367_spring_2009/documents/vhdl2005_overview.pdf"> this tutorial </a>. Then you can use
+    	the examples in this page to practice. Nevertheless I'll remind some of the main concepts.<p>
+    	
+    	<div id="main_code">
+    	
+    	<p style="margin-bottom:5mm;">You can download all the files of the project <a href="http://pluca.web.cern.ch/pluca/vhdl/vhdl_code/counter.zip"> here </a> <p>
+    	
+    	<p style="margin:5mm;">
+    	First of all you need to include the libraries you need. "ieee" is the standard library. N.B.: "--" in VHDL is a comment.
+    	<p>
+    	
+    	<pre class="codeblock">
+library ieee;
+use ieee.std_logic_1164.all; 			-- contains the "std_logic" type definitions.
+use ieee.numeric_std.all; 			-- contains the definition of real numbers operations.
+use ieee.std_logic_unsigned.all; 		-- contains the definition std_usigned.
+use ieee.std_logic_arith.conv_std_logic_vector; -- converts numbers to std_vector
+		</pre> <br>
+
+		<p style="margin:5mm;">
+    	Now every VHDL file has to contain an "entity". In practice this is the description of a circuit
+    	which can be made of other ore simple circuits (see button later).
+    	In the definition of an entity one has to declare:
+    		<ul>
+    			<li>Constants to be used throughout using <code>generic</code><br>
+    				For example here "n" is the number of leds available and "k" the modulo.
+    				In this case I set n=6 and k=63 which is the maximum 6 bit number.
+    				Notice also that VHDL has a fundamental difference with higher level languages as C++:
+    				it deals with time (see later). For this reason I also give as generics the period
+    				of the clock I use 20 ns => 50 MHz and the period of the counting 500 ms => it counts twice per second.
+    			</li>
+    			<li>The signals in input and output to/from the circuit using <code>port</code>.
+    				In this case in input we have the clock, 2 buttons. And in output
+    				the count to be displayed on the leds and the output to be displayed on the two digit display.
+    			</li>
+    		</ul> 
+    	</p>
+    	<p style="margin:5mm;width:100%;text-align:center;font-weight:bold;"> The std_logic type and declarations </p>
+    	<p style="margin:5mm;width:100%;"> "std_logic" is represents
+    	a bit and std_logic_vector a series of bits. Declarations have the syntax 
+    	</p>
+    	<p style="text-align:center;">
+    	<code> name : type := default_value; </code>
+    	</p>
+    	<p>
+    	For example <br>
+    	<code>mybits : std_logic_vector(6 downto 0) := "100000";</code><br>
+    	defines "mybits" as a 6 bits object with the least important one mybits(0) on the right.<br>
+    	<code>mybits_up : std_logic_vector(0 to 6) := "100000"</code><br>
+    	has the most important bit on the left. Therefore:
+    	</p>
+    	<div style="margin:5mm;width:100%;position:relative;">
+    	<code style="position:relative;left:30%;">
+			mybits(0) = 0 <br>
+    		mybits(5) = 1 <br>
+        	mybits_up(0) = 1 <br>
+    		mybits_up(5) = 0 <br>		
+    	</code>
+    	</div>
+
+		<pre class="codeblock">
+entity modcounter is
+	generic ( 
+        n    : natural := 6;      -- Number of leds  
+        k    : natural := 63;     -- Modulo 
+        pclk : time := 20 ns;     -- Clock period 
+        pcnt : time := 500 ms     -- Count period 
+    ); 
+    port(  
+    	-- Inputs (IN) 
+        clk      : IN std_logic;		-- Clock 
+        rst      : IN std_logic;		-- Button to reset the count 
+		cdir     : IN std_logic;	-- Button to change direction 
+		-- Outputs (OUT) 
+        count    : OUT std_logic_vector(n-1 downto 0);  	-- Count connected to the leds 
+		disp_num : OUT std_logic_vector(13 downto 0)    -- Connected to the 7 digit display 
+    ); 
+end modcounter; 
+		</pre>
+		
+		<p style="margin:5mm;">Now that we defined the interface of our circuit we need to define what it does.
+		In the VHDL language this means implementing an "architecture" for the entity.</p>
+		
+		<pre class="codeblock">
+architecture docount of modcounter is
+		</pre>
+		
+		<p style="margin:5mm;">
+		Architectures are made of a declaration scope and a body:
+		</p>
+		<div style="position:relative; left:30%">
+		    <code>
+    		architecture name of name_entity is <br>
+    		< declarations here > <br>
+        	begin <br>
+    		< actual code here > <br>
+    		end name;		
+    	</code>
+    	</div>
+		<p style="margin:5mm;">
+		Let's have a look at the declarations area of the architecture for our counter.
+		</p>
+		
+		<pre class="codeblock">		
+component button is      -- debounced button
+	generic(
+        clk_period : time := pclk;
+		debounce_time : time := 20 ms;
+		on_state : std_logic := '0'
+           );
+	port(
+        input  : IN std_logic := '1';
+        output : OUT std_logic := '1';
+        clk    : IN  std_logic
+        );
+end component;
+
+component two_digit_ctrl is   -- converted to selven bit display
+	generic ( n : integer := 6 );
+	port(
+		en   : IN  std_logic := '1';
+		num  : IN  std_logic_vector(5 downto 0);
+		res  : OUT std_logic_vector(13 downto 0)
+		);
+end component;
+		</pre>
+
+		<p style="margin:5mm;">
+This contains first of all the declaration of two "components". A component declaration si the way
+VHDL uses to use an entity (namely a circuit) defined in a different file.
+In this case we have two components:
+<ul>
+	<li> A "button" component which defines a <a href="http://pluca.web.cern.ch/pluca/vhdl/vhdl_button.html"> debounced button</a>. 
+	Buttons tend not to be perfect and fluctuate a bit before settling in a state.
+	This circuit given an input (which is assumed to be a button) produces
+	a stable output. In practice if changes output only if the input is stable for a certain
+	amount of time. You can find the definition of the "button" entity <a href="http://pluca.web.cern.ch/pluca/vhdl/vhdl_code/button.html">here</a>.
+	</li>
+	<li> A "two_digit_ctrl" component that defines a circuit to convert a number in
+	it's 7 bit display form. You can find the definition of the "two_digit_ctrl" entity <a href="http://pluca.web.cern.ch/pluca/vhdl/vhdl_code/two_digit_control.html">here</a>.
+	</li>
+</ul>
+		</p>
+
+		<p style="margin:5mm;">
+		After the components there are the definitions of the signals and constants. 
+		</p>
+
+<pre class="codeblock">	
+signal   tmp        : std_logic_vector(n-1 downto 0) := (others => '0'); -- current count temporary
+signal   dir        : std_logic := '0';         -- current direction
+signal   dcdir      : std_logic := '1';         -- debounced value for the button to change direction
+constant nprescale  : integer := pcnt / pclk;   -- number of clock cycles to a count cycle
+signal   prescale   : integer := 0;		-- prescale (need to wait until a count cycle is past)
+signal   men        : std_logic := '1';         -- enable (always set to 1 in the case)
+</pre>
+
+		<p style="margin:5mm;">
+			Finally we go to the definition of the behaviour which starts with "begin".
+			The first thing to do is to instantiate the components previously declared, namely connect them to the right signals.
+		</p>
+
+
+<pre class="codeblock">	
+begin
+
+disp_control : two_digit_ctrl
+	port map(men,tmp,disp_num);
+
+cdirbutton : button
+	port map(cdir,dcdir,clk);
+</pre>
+		
+		<p style="margin:5mm;">
+			Then we have the first "process" of our example. All statements in an architecture are executed
+			simultaneously. A process is a block containing serial lines. This process implements the 
+			circuit that reads the input of the button and toggles the "dir" variable, which represents
+			the current counting direction.
+			The circuit is sensitive to "<code>cdir</code>" meaning that it will be executed when <code>cdir</code> changes value.
+			<code>cdir</code> is the debounced output of the button. If <code>cdir = 0</code> then the direction toggles.
+		</p>
+		
+		
+<pre class="codeblock">	
+	setdir :  process(cdir)
+	begin
+		if(dcdir='0') then		-- button pushed
+			dir <= not dir;		-- direction toggles
+		end if;
+	end process;
+</pre>
+
+
+		<p style="margin:5mm;">
+			Here is where the actual count happens. The process is sensitive to the restart button and the clock.
+			First of all if the restart button is pushed the value is reset to a constant.
+		</p>
+		<code> tmp <= (others => '0'); </code>
+		<p style="margin:5mm;">sets to '0' all bits of tmp. "<code>others</code>" allows not so specify the dimension of tmp.</p>
+		<code> conv_std_logic_vector(k,n) </code> 
+		<p style="margin:5mm;">converts the value 'k' into a n dimensional std_logic_vector.</p>
+		
+		<p style="margin:5mm;">If the reset button is not pushed then the circuit does something on each clock rising edge 
+		"<code>elsif(rising_edge(clk))</code>". This structure is synthesised with a flip-flop.</p>
+		
+		<p style="margin:5mm;">Inside the clock edge the circuit checks which direction is currently set
+		and increases or decreases the counter accordingly. It also check if the count does above the modulo
+		and in that case it resets the count.
+		Notice that the counting is pre-scaled. It only changes every <code>nprescale</code> clock cycles.
+		This is not strictly necessary. On the other hand if you don't prescale it will count at the clock rate.
+		Namely every 20 ns, which is way too fast for the eye to see. Therefore it will seem that the leds are
+		all constantly on.
+		</p>
+
+<pre class="codeblock">	
+counter : process(clk,rst)
+begin
+	if(rst='0') then			-- was the reset button pushed?
+		prescale <= 0;			-- then reset the counter and the prescale to the next count
+			if (dir='0') then
+				tmp <= (others => '0');
+			else
+				tmp <= conv_std_logic_vector(k,n);
+			end if;	
+	elsif(rising_edge(clk)) then		-- is reset wasn't pushed then wait for a clock edge
+		if(prescale>=nprescale) then	-- if the pre-scale got to the defined counting time
+						(in this case half a second) then increment or decrement
+						the counter depending on the current set direction.				
+			prescale <= 0;
+			if (dir='0') then	-- check current counting direction
+				if(tmp=conv_std_logic_vector(k,n)) then	-- if count to the end reset
+					tmp <= (others => '0');
+				else
+					tmp <= tmp + 1;
+				end if;
+			else
+				if(tmp=conv_std_logic_vector(0,n)) then
+					tmp <= conv_std_logic_vector(k,n);
+				else
+					tmp <= tmp - 1;
+				end if;
+			end if;
+		else 
+			prescale <= prescale + 1; -- wait the defined counting time using a pre-scale counter 
+		end if;
+	end if;
+		
+end process;
+</pre>
+
+		<p style="margin:5mm;">Dulcis in fundo put the count into the led variable.
+		Why did I not use the count in the process directly?!? Well, the leds need a
+		low voltage to be on. Then we need to send to the led the opposite value for each
+		bit. "1100" --> "0011". Finally don't forget to end the architecture. 
+		</p>
+
+<pre class="codeblock">	
+    count <= not tmp;
+
+end docount;
+      </pre>
+
+        <p style="margin:5mm;">
+        <a class="btn btn-success" href="//pluca.web.cern.ch/pluca/vhdl/vhdl_home.html">Go back to VHDL home.</a>
+        <a class="btn btn-success" href="//pluca.webnode.com/"><span class="glyphicon glyphicon-home" style="margin-right:2px;"></span> Go back to Luca home.</a>
+        </p><br>
+        If you have any questions about the examples or VHDL in general feel free to contact me on luca.pescatore@cern.ch.
+        
+	</div>
+    
+    </div>
+</body>
+
+</html>
+

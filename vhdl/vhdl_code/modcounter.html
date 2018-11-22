@@ -1,0 +1,115 @@
+<html>
+<body>
+<pre>
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+use ieee.std_logic_unsigned.all;
+use ieee.std_logic_arith.conv_std_logic_vector;
+
+entity modcounter is
+    generic (
+        n    : natural := 6;
+        k    : natural := 63;
+        pclk : time := 20 ns;
+        pcnt : time := 500 ms
+    );
+    port( 
+        clk      : IN std_logic;
+        rst      : IN std_logic;
+		  cdir     : IN std_logic;
+        count    : OUT std_logic_vector(n-1 downto 0);
+		  disp_num : OUT std_logic_vector(13 downto 0)
+    );
+end modcounter;
+
+architecture docount of modcounter is
+
+	component button is
+		generic(
+               clk_period : time := pclk;
+					debounce_time : time := 20 ms;
+					on_state : std_logic := '0'
+           );
+		port(
+            input  : IN std_logic := '1';
+            output : OUT std_logic := '1';
+            clk    : IN  std_logic
+        );
+	end component;
+	
+	component two_digit_ctrl is
+		generic ( n : integer := 6 );
+		port(
+			en   : IN  std_logic := '1';
+			num  : IN  std_logic_vector(5 downto 0);
+			res  : OUT std_logic_vector(13 downto 0)
+		);
+	end component;
+
+
+    signal   tmp        : std_logic_vector(n-1 downto 0) := (others => '0');
+	 signal   dir        : std_logic := '0';
+	 signal   dcdir      : std_logic := '1';
+	 constant nprescale  : integer := pcnt / pclk;
+	 signal   prescale   : integer := 0;
+	 signal   men        : std_logic := '1';
+
+begin
+
+	disp_control : two_digit_ctrl
+	   --generic map (6);
+		port map(men,tmp,disp_num);
+
+	cdirbutton : button
+		port map(cdir,dcdir,clk);
+
+	setdir :  process(cdir)
+	begin
+		if(dcdir'event and dcdir='0') then
+			dir <= not dir;
+		end if;
+	end process;
+
+
+    counter : process(clk,rst)
+    begin
+        
+			if(rst='0') then
+				prescale <= 0;
+				if (dir='0') then
+					tmp <= (others => '0');
+				else
+					tmp <= conv_std_logic_vector(k,n);
+				end if;	
+			elsif(rising_edge(clk)) then
+				if(prescale>=nprescale) then
+					prescale <= 0;
+					if (dir='0') then
+						if(tmp=conv_std_logic_vector(k,n)) then
+							tmp <= (others => '0');
+						else
+							tmp <= tmp + 1;
+						end if;
+					else
+						if(tmp=conv_std_logic_vector(0,n)) then
+							tmp <= conv_std_logic_vector(k,n);
+						else
+							tmp <= tmp - 1;
+						end if;
+					end if;
+				else 
+					prescale <= prescale + 1; 
+				end if;
+			end if;
+			
+    end process;
+
+    count <= not tmp;
+
+end docount;
+        
+</pre>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<html>
+<body>
+<pre>
+
+library ieee;
+use ieee.std_logic_1164.ALL;
+use ieee.numeric_std.all;
+use ieee.std_logic_arith.conv_std_logic_vector;
+use ieee.std_logic_unsigned.all;
+
+
+entity two_digit_ctrl is
+
+	generic ( n : integer := 6 )
+	port(
+	    en   : IN  std_logic;						-- Enable
+		num  : IN  std_logic_vector(n downto 0);	-- Input number
+		res  : OUT std_logic_vector(13 downto 0)	-- Output to 7 bits digit display
+		);
+end two_digit_ctrl;
+
+
+architecture two_digit_display of two_digit_ctrl is
+
+    component disp_control is						-- This is a single digit display control (counting 0 to 9)
+	 port(
+		num : IN   std_logic_vector(3 downto 0);
+		res : OUT  std_logic_vector(6 downto 0);
+		en  : IN   std_logic
+	 );
+    end component;
+
+    signal n1, n2 : std_logic_vector(3 downto 0);	-- n1 -> dozens, n2 -> units 
+    signal d1, d2 : std_logic_vector(6 downto 0);   -- 7 bits code for n1 and n2
+    variable u1, u2 : unsigned(4 downto 0);   		-- intermediate temporary variables 
+
+begin
+	
+	digit1 : disp_control port map (num=>n1,res=>d1,en=>en);	-- get 7 bits code for n1 and n2
+	digit2 : disp_control port map (num=>n2,res=>d2,en=>en);
+
+    process(num,en)
+    begin
+        if(en='1') then 
+            u1 := unsigned(num) / 10;						-- find dozens
+            u2 := unsigned(num) mod 10;						-- find units
+            n1 <= std_logic_vector( u1( 3 downto 0 ) );
+            n2 <= std_logic_vector( u2( 3 downto 0 ) );
+        else
+            n1 <= "XXXX";
+            n2 <= "XXXX";
+        end if;
+    end process;
+
+	res <= d1 & d2;
+		
+end two_digit_display;
+
+</pre>
+</body>
+</html>

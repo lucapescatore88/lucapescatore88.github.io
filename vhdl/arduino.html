@@ -1,0 +1,174 @@
+<html>
+
+<head>
+<title>Fun with Arduino</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+<link rel="stylesheet" href="//pluca.web.cern.ch/pluca/assets/css/website_style.css">
+<link rel="stylesheet" href="vhdl_style.css">
+<link rel="shortcut icon" href="../photos/board-bkg.ico" />
+
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+<script src="//pluca.web.cern.ch/pluca/structure.js"></script>
+<script src="//pluca.web.cern.ch/pluca/assets/js/build_index.js"></script>
+
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/it_IT/sdk.js#xfbml=1&version=v2.0";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));
+</script>
+
+</head>
+
+<style>
+.extitle {
+	display:block;
+	margin:20px;
+	font-family: "Comic Sans MS", cursive, sans-serif;
+	font-size:25px;
+	}
+.example {
+	border-style: outset;
+	text-align:center;
+	display:table;
+	width:100%;
+	}
+#index {
+	font-size:1.5em;
+	}
+</style>
+
+<body onload="build_index('example','index');">
+
+	<div class="main_menu" id="main_menu"></div>
+
+	<div class="container-narrow" id="main-content">
+    	<p class="main-title" style="width=100%;display:block;"> Fun with Arduino! </p> <br>
+    	
+    	<p style="display:block;" >
+    		<a href="//www.arduino.cc"> Arduino</a> is a fantastic little tool which allows you
+    		to do simple electronics. It's a programmable board complete with pins an even coms with LEDs, capacitors,
+    		motors and other small electronic deviced with which you can have fun. And it is an italian project!
+    		In this gallery I report just a couple of videos of little circuits I've made.
+    	</p>
+    	
+    			<p class="extitle"> In development... </p> 
+    	
+    	<div id="index"></div>
+    	
+    	<div class="example" id="ex_button" text="Debounced button">
+    		<p class="extitle" >Button: yes a simple reliable button.</p>
+    		
+    			<iframe width="420" height="315" 
+    				src="https://www.youtube.com/embed/dDKcVb42Nrk" frameborder="0" allowfullscreen>
+    			</iframe>
+    			
+    			<p style="text-align:left;margin:20px">
+    				A button... there's buttons everywhere nowadays. But it's not trivial at all
+    				to build a good reliable button. This project made me realise how amazing
+    				all electronics around us is.
+    			</p>
+    	</div>
+		
+		<div class="example" id="ex_lightresist" text="Light sensitive resistance">
+    		<p class="extitle" >A light that automatically switches on in the dark</p>
+    		
+    			<iframe width="420" height="315" 
+    				src="https://www.youtube.com/embed/oQWVRXuDuts" frameborder="0" allowfullscreen>
+    			</iframe>
+    			
+    			<p style="text-align:left;margin:20px">
+    				In this project I use a resistance which is sensitive to light to
+    				automatically switch on a led when it's dark.
+    			</p>
+    	</div>
+		
+		<div class="example" id="ex_shadedlight" text="Shaded light">
+    		<p class="extitle" >A shaded night light</p>
+    		
+    			<iframe width="420" height="315" 
+    				src="https://www.youtube.com/embed/6g0_ImUAf6E" frameborder="0" allowfullscreen>
+    			</iframe>
+    			
+    			<p style="text-align:left;margin:20px">
+    				This project simply complicated a bit the one before. Instead of
+    				using the light-sensitive resistance as a switch we can make the
+    				intensity of the led dependent on the amount of light.
+    			</p>
+    	</div>
+    	
+    	<div class="example" id="ex_infrared" text="Infrared sensor">
+    		<p class="extitle" >Remote controlled light</p>
+    		
+    			<iframe width="420" height="315" 
+    				src="https://www.youtube.com/embed/RN9CBTHMYXE" frameborder="0" allowfullscreen>
+    			</iframe>
+    			
+    			<p style="text-align:left;margin:20px">
+    				In this project I use an infrared sensor to switch on a led.
+    				It works with any remote control!
+    			</p>
+    	</div>
+    	
+        <div class="example" id="ex_rainbow" text="Colored leds and buttons">
+    		<p class="extitle" >Some led mess</p>
+    		
+    			<iframe width="420" height="315" 
+    				src="https://www.youtube.com/embed/RN9CBTHMYXE" frameborder="0" allowfullscreen>
+    			</iframe>
+    			
+    			<p style="text-align:left;margin:20px">
+    				In this project I put together some of what I learned in the previous ones.
+    				A button controls 4 leds. Pushing the button makes a white led increase intensity.
+    				After 3 pushes the white led switches off and 3 coloured leds switch on and off in
+    				a light pattern. 
+    			</p>
+    	</div>	
+		
+		<p class="main-title"> Raspberry Pi! </p>
+		
+		    <div class="example" id="ex_motors" text="DC motors and servo motors">
+    		<p class="extitle" >DC motors and servo motors</p>
+    		
+    			<iframe width="560" height="315" src="https://www.youtube.com/embed/uiRXbhOVIWY" frameborder="0" allowfullscreen></iframe>
+    			
+    			<p style="text-align:left;margin:20px">
+    				Here explained the difference between a DC motor and a servo motor.
+    				Both driven thanks to a variable resistance via an Arduino and a Raspberry Pi.
+    			</p>
+    	</div>	
+		
+		
+	<div style="display:table;width:100%;">
+	<div class="fb-share-button" 
+		style="display:table-cell;"
+		data-href="http://pluca.web.cern.ch/pluca/vhdl/vhdl_home.html" 
+		data-layout="button">
+	</div>
+	<div class="fb-like" 
+		style="display:table-cell;"
+		data-href="//pluca.web.cern.ch/pluca/vhdl/vhdl_home.html" 
+		data-layout="standard" 
+		data-action="like" 
+		data-show-faces="false">
+	</div>
+	<p style="margin:5mm;float:right;">
+        <a class="btn btn-success" 
+        style="display:table-cell;" 
+        href="//pluca.webnode.com/">
+        <span class="glyphicon glyphicon-home" style="margin-right:2px;">
+        </span> Go back to Luca home.</a>
+    </p>
+	</div>
+
+    </div>
+</body>
+
+</html>
+

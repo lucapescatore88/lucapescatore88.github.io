@@ -1,0 +1,293 @@
+<html>
+
+<head>
+<title>WebGL - Texture in a texture</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+<link rel="stylesheet" href="mystyle.css">
+<link rel="shortcut icon" href="icons/keyboard.ico" />
+
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+<script type="text/javascript" src="../assets/js/glMatrix-0.9.5.min.js"></script>
+<script type="text/javascript" src="../assets/js/webgl-utils.js"></script>
+<script type="text/javascript" src="../assets/js/general-webgl-utils.js"></script>
+<script type="text/javascript" src="../assets/js/webgl_shapes.js"></script>
+
+
+<script type="text/javascript">
+    
+    var rttFramebuffer;
+    var rttTexture;
+    
+    var cube = new Shape("Cube");
+    
+    function initBuffers() {
+
+        var colors=[];
+        var col = 
+        [
+            [1.0,0.,0.,1.],
+            [0.,1.0,0.,1.],
+            [0.,0.,1.0,1.]
+        ]
+        for (var i in col)
+        {
+            var color = col[i];
+            for (var j = 0; j < 4; j++)
+            {
+                colors = colors.concat(color);
+            }
+            for (var k = 0; k < 4; k++)
+            {
+                colors = colors.concat(color);
+            }
+        }
+        
+        cube.colors = colors;
+        cube.init(gl);
+    }
+
+
+    var xRot = 0;
+    var xSpeed = 0;
+
+    var yRot = 0;
+    var ySpeed = 0;
+
+    var z = -5.0;
+
+    function drawCube(opt)
+    {
+        gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        if(opt=="inner")
+        {
+            gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        }
+        else
+        {
+             gl.clearColor(0.0, 0.0, 1.0, 1.0);
+        }
+
+        gl.useProgram(curShaderProgram);
+
+        mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
+
+        mat4.identity(mvMatrix);
+
+        mat4.translate(mvMatrix, [curpos[0], 0.0, 0.0]);
+        mat4.translate(mvMatrix, [0.0, curpos[1], 0.0]);
+        mat4.translate(mvMatrix, [0.0, 0.0, z]);
+        mat4.multiply(mvMatrix, rotationMatrix);
+        mat4.rotate(mvMatrix, degToRad(xRot), [1, 0, 0]);
+        mat4.rotate(mvMatrix, degToRad(yRot), [0, 1, 0]);
+
+        var lighting = document.getElementById("lighting").checked;
+        gl.uniform1i(curShaderProgram.useAmbientLighting, lighting);
+        gl.uniform1i(curShaderProgram.useDirectLighting, lighting);
+        gl.uniform1i(curShaderProgram.usePointLighting, false);
+        
+        /// Get lighting color
+        if (lighting) {
+        gl.uniform3f(
+            curShaderProgram.ambientColorUniform,
+            parseFloat(document.getElementById("ambientR").value),
+            parseFloat(document.getElementById("ambientG").value),
+            parseFloat(document.getElementById("ambientB").value)
+        );
+
+        /// Get lighting direction
+    
+        var lightingDirection = [
+            parseFloat(document.getElementById("directX").value),
+            parseFloat(document.getElementById("directY").value),
+            parseFloat(document.getElementById("directZ").value)
+        ];
+
+        var adjustedLD = vec3.create();
+        vec3.normalize(lightingDirection, adjustedLD);
+        vec3.scale(adjustedLD, -1);
+        gl.uniform3fv(curShaderProgram.lightingDirectionUniform, adjustedLD);
+        
+        gl.uniform3f(
+            curShaderProgram.directionalColorUniform,
+            parseFloat(document.getElementById("directR").value),
+            parseFloat(document.getElementById("directG").value),
+            parseFloat(document.getElementById("directB").value)
+        );
+        
+        }
+        
+       
+        gl.uniform1i(curShaderProgram.useModeUniform, 1);
+        cube.text_id = gl.TEXTURE0;
+       
+        cube.draw(gl);
+    }
+
+     function drawScene() {
+     
+        if(document.getElementById("fancy").checked) {
+            gl.bindFramebuffer(gl.FRAMEBUFFER, rttFramebuffer);
+            cube.texture = textures["luca"];
+            drawCube("inner");
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+            cube.texture = rttTexture;
+            drawCube("outer");
+        }
+        else {
+            cube.texture = textures["luca"];
+            drawCube("inner");
+        }
+    }
+
+
+    var lastTime = 0;
+
+     function animate() {
+        var timeNow = new Date().getTime();
+        if (lastTime != 0) {
+            var elapsed = timeNow - lastTime;
+
+            xRot += (xSpeed * elapsed) / 1000.0;
+            yRot += (ySpeed * elapsed) / 1000.0;
+        }
+        lastTime = timeNow;
+    }
+
+
+    function handleKeys () {
+        if (currentlyPressedKeys[65]) {
+            // A
+            z -= 0.05;
+        }
+        if (currentlyPressedKeys[68]) {
+            //D
+            z += 0.05;
+        }
+        if (currentlyPressedKeys[37]) {
+            // Left cursor key
+            ySpeed -= 1;
+        }
+        if (currentlyPressedKeys[39]) {
+            // Right cursor key
+            ySpeed += 1;
+        }
+        if (currentlyPressedKeys[38]) {
+            // Up cursor key
+            xSpeed -= 1;
+        }
+        if (currentlyPressedKeys[40]) {
+            // Down cursor key
+            xSpeed += 1;
+        }
+    };
+
+
+    function setColor()
+    {
+        var mycolor = [
+            parseFloat(document.getElementById("cubeR").value),
+            parseFloat(document.getElementById("cubeG").value),
+            parseFloat(document.getElementById("cubeB").value),
+            parseFloat(document.getElementById("alpha").value)
+        ];
+
+        cube.set_color(mycolor);
+        cube.init(gl);
+    };
+
+
+    function handleMouseMove(event)
+    {
+        if(document.getElementById("translate").checked)
+        {
+            handleMouseMoveTranslate(event);
+        }
+        else
+        {
+            handleMouseMoveRotate(event);
+        }
+    };
+
+
+
+    var canvas;
+    var text_texture;
+    function webGLStart() {
+        canvas = document.getElementById("mycanvas");
+        initGL(canvas);
+        loadShaders("../assets/shaders/","textcol","per_frag_light");
+        curShaderProgram = createShaderProgram("textcol","per_frag_light",true);
+        gl.useProgram(curShaderProgram);
+        initBuffers();
+
+        var buffer = initTextureFramebuffer()
+        rttFramebuffer = buffer[1];
+        rttTexture = buffer[0];
+    
+        initTexture("luca","../uploads/bricks.jpg");
+
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.enable(gl.DEPTH_TEST);
+
+        document.onkeydown = handleKeyDown;
+        document.onkeyup = handleKeyUp;
+        canvas.onmousedown = handleMouseDown;
+        document.onmouseup = handleMouseUp;
+        document.onmousemove = handleMouseMove;
+
+        tick();
+    }
+
+
+</script>
+
+
+</head>
+
+
+<body onload="webGLStart();">
+
+	<div class="container-narrow" style="text-align:center;">
+    <p class="main-title"> Texture into a texture </p>
+	
+    Push arrows to rotate the cube or use the mouse to move it or rotate it. <br>
+    <canvas id="mycanvas" style="border: none;" width="500" height="500"></canvas>
+    <br>
+    Choose if the mouse does a translation or rotation action.
+    <br>
+    <input type="radio" name="mouseact" id="translate" checked="checked">Translate<br>
+    <input type="radio" name="mouseact" id="rotate">Rotate<br>
+    <input type="checkbox" id="lighting" checked="true">Activate lighting<br>
+    <input type="checkbox" id="fancy">Do fancy stuff!!!<br>
+    
+    <hr>
+    Ambient light color<br>
+    <input type="text" id="ambientR" value="0.0">R <input type="text" id="ambientG" value="0.0">G <input type="text" id="ambientB" value="0.0"> B<br>
+    
+    Directional light direction<br>
+     <input type="text" id="directX" value="-0.25">X <input type="text" id="directY" value="-0.25">Y <input type="text" id="directZ" value="-1"> Z<br>
+    Directional light color<br>
+     <input type="text" id="directR" value="1">R <input type="text" id="directG" value="1">G <input type="text" id="directB" value="1"> B<br>
+     
+     <hr>
+     
+     Set cube color<br>
+     <input type="text" id="cubeR" value="1">R <input type="text" id="cubeG" value="1">G <input type="text" id="cubeB" value="1"> B <input type="text" id="alpha" value="1">Alpha<button onclick="setColor();">Set color</button><br>
+	
+	    	<p style="margin:5mm;">
+        <a class="btn btn-success" href="http://pluca.web.cern.ch/pluca/webgl/webgl_home.html">Go back to WebGL home.</a>
+        <a class="btn btn-success" href="http://pluca.webnode.com/"><span class="glyphicon glyphicon-home" style="margin-right:2px;"></span> Go back to Luca home.</a>
+    	</p>
+	
+	</div>
+
+</body>
+
+</html>
+

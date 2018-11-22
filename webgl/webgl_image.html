@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="utf-8">
+<title>WebGL - Image processing</title>
+
+<script id="shader-v-text-processing" type="x-shader/x-vertex"> </script>
+<script id="shader-f-text-processing" type="x-shader/x-fragment"> </script>
+
+<link rel="stylesheet" href="mystyle.css">
+<link rel="shortcut icon" href="icons/keyboard.ico" />
+
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+<script type="text/javascript" src="../assets/js/glMatrix-0.9.5.min.js"></script>
+<script type="text/javascript" src="../assets/js/webgl-utils.js"></script>
+<script type="text/javascript" src="../assets/js/general-webgl-utils.js"></script>
+
+<!--
+  var kernels = {
+    Normal: [
+      0, 0, 0,
+      0, 1, 0,
+      0, 0, 0
+    ],
+    /*
+    GaussianBlur: [
+      0.045, 0.122, 0.045,
+      0.122, 0.332, 0.122,
+      0.045, 0.122, 0.045
+    ],
+    GaussianBlur2: [
+      1, 2, 1,
+      2, 4, 2,
+      1, 2, 1
+    ],*/
+    GaussianBlur: [
+      0, 1, 0,
+      1, 1, 1,
+      0, 1, 0
+    ],
+    BoxBlur: [
+        0.111, 0.111, 0.111,
+        0.111, 0.111, 0.111,
+        0.111, 0.111, 0.111
+    ],
+    TriangleBlur: [
+        0.0625, 0.125, 0.0625,
+        0.125,  0.25,  0.125,
+        0.0625, 0.125, 0.0625
+    ],
+    Unsharpen: [
+      -1, -1, -1,
+      -1,  9, -1,
+      -1, -1, -1
+    ],
+    Sharpness: [
+       0,-1, 0,
+      -1, 5,-1,
+       0,-1, 0
+    ],
+    Sharpen: [
+       -1, -1, -1,
+       -1, 16, -1,
+       -1, -1, -1
+    ],
+    DetectEdges_1: [
+       -0.125, -0.125, -0.125,
+       -0.125,  1,     -0.125,
+       -0.125, -0.125, -0.125
+    ],
+    DetectEdges_2: [
+       -1, -1, -1,
+       -1,  8, -1,
+       -1, -1, -1
+    ],
+    /*edgeDetect3: [
+       -5, 0, 0,
+        0, 0, 0,
+        0, 0, 5
+    ],
+    edgeDetect4: [
+       -1, -1, -1,
+        0,  0,  0,
+        1,  1,  1
+    ],
+    edgeDetect5: [
+       -1, -1, -1,
+        2,  2,  2,
+       -1, -1, -1
+    ],*/
+    DetectEdges_3: [
+       -5, -5, -5,
+       -5, 39, -5,
+       -5, -5, -5
+    ],
+    sobelHorizontal: [
+        1,  2,  1,
+        0,  0,  0,
+       -1, -2, -1
+    ],
+    sobelVertical: [
+        1,  0, -1,
+        2,  0, -2,
+        1,  0, -1
+    ],
+    previtHorizontal: [
+        1,  1,  1,
+        0,  0,  0,
+       -1, -1, -1
+    ],
+    previtVertical: [
+        1,  0, -1,
+        1,  0, -1,
+        1,  0, -1
+    ],
+    Emboss: [
+       -2, -1,  0,
+       -1,  1,  1,
+        0,  1,  2
+    ]
+  };
+  -->
+
+<script>
+   var kernels = {
+    Normal: [
+      0, 0, 0,
+      0, 1, 0,
+      0, 0, 0
+    ],
+    GaussianBlur: [
+      0, 1, 0,
+      1, 1, 1,
+      0, 1, 0
+    ],
+    BoxBlur: [
+        0.111, 0.111, 0.111,
+        0.111, 0.111, 0.111,
+        0.111, 0.111, 0.111
+    ],
+    TriangleBlur: [
+        0.0625, 0.125, 0.0625,
+        0.125,  0.25,  0.125,
+        0.0625, 0.125, 0.0625
+    ],
+    Unsharpen: [
+      -1, -1, -1,
+      -1,  9, -1,
+      -1, -1, -1
+    ],
+    Sharpness: [
+       0,-1, 0,
+      -1, 5,-1,
+       0,-1, 0
+    ],
+    Sharpen: [
+       -1, -1, -1,
+       -1, 16, -1,
+       -1, -1, -1
+    ],
+    DetectEdges_1: [
+       -0.125, -0.125, -0.125,
+       -0.125,  1,     -0.125,
+       -0.125, -0.125, -0.125
+    ],
+    DetectEdges_2: [
+       -1, -1, -1,
+       -1,  8, -1,
+       -1, -1, -1
+    ],
+    DetectEdges_3: [
+       -5, -5, -5,
+       -5, 39, -5,
+       -5, -5, -5
+    ],
+    Emboss: [
+       -2, -1,  0,
+       -1,  1,  1,
+        0,  1,  2
+    ]
+  };
+  
+var canvas;
+
+function main() {
+  var image = new Image();
+  image.onload = function() {
+    canvas = document.getElementById("mycanvas");
+    renderImage(canvas,image);
+  }
+  image.src = "../photos/DSC00120.png";
+}
+
+</script>
+
+</head>
+
+<body onload="main()">
+
+<div class="container-narrow" style="text-align:center;">
+    <p class="main-title"> Image processing with WebGL </p>
+		<canvas id="mycanvas" width="500" height="335"></canvas>
+
+		<div id="optlist" style="margin-top:10px;"></div>
+		
+		<p>Choose an option to modify the image.</p>
+		
+		<p style="margin:5mm;">
+        <a class="btn btn-success" href="http://pluca.web.cern.ch/pluca/webgl/webgl_home.html">Go back to WebGL home.</a>
+        <a class="btn btn-success" href="http://pluca.webnode.com/"><span class="glyphicon glyphicon-home" style="margin-right:2px;"></span> Go back to Luca home.</a>
+    	</p>
+</div>
+
+<script>
+  var list = document.getElementById("optlist");
+  var select = document.createElement("select")
+  for (var name in kernels) {
+        var option = document.createElement("option");
+        option.value = name;
+        if (name == "normal") {
+            option.selected = true;
+        }
+        
+        option.appendChild(document.createTextNode(name));
+        select.appendChild(option);
+    }
+    select.onchange = function(event) {
+        drawWithKernel(this.options[this.selectedIndex].value);
+    };
+    list.appendChild(select);
+</script>
+</body>
+
+</html>
+
+
+

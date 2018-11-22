@@ -1,0 +1,165 @@
+<html>
+
+<head>
+<title>VHDL examples</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+<link rel="stylesheet" href="../assets/css/website_style.css">
+<link rel="stylesheet" href="vhdl_style.css">
+<link rel="shortcut icon" href="../photos/board-bkg.ico" />
+
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+<script src="http://pluca.web.cern.ch/pluca/structure.js"></script>
+
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/it_IT/sdk.js#xfbml=1&version=v2.0";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));
+</script>
+
+<script>
+	function resize_content() {
+	
+		console.log(document.getElementById("excounter").clientWidth);
+		if(document.getElementById("excounter").clientWidth == 300)
+		{
+			$(".ex").css("width","100%");
+		}
+		else 
+		{
+			$(".ex").css("width","49.99%");
+		}	
+	}
+</script>
+
+<style>
+
+.ex {
+	float:left;
+	width:49.99%;
+	min-width:300px;
+	text-align:center;
+	}
+.ex > .video {
+	left:50%;
+	width:70%;
+	/*height:30%;*/
+	max-width:400px;
+	min-height:200px;
+	}
+.ex > .title {
+	display:block;
+	margin:20px;
+	text-decoration:underline;
+	}
+
+</style>
+
+</head>
+
+
+<body onload="resize_content()" onresize="resize_content();">
+
+	<div class="main_menu" id="main_menu"></div>
+
+	<div class="container-narrow" id="main-content">
+    	<p class="main-title" style="width=100%;display:block;"> VHDL and FPGAs </p> <br>
+    	
+    	<p style="display:block;" >
+    		FPGAs are Field Programmable Gate Arrays. They are sets of gates that can be connected to
+    		form a custom circuit. This allows to build ASIC (Application Specific Integrated Circuit)
+    		simply programming the connections. This is done via HDL (Hardware Description Language) languages.
+    		For these examples I use VHDL and an Altera FPGA board.
+    	</p>
+    	
+    	<p style="display:block;font-size:40px;font-weight:bold;text-align:center"> Examples </p> <br>
+    	
+    	<div id="examples" style="width:100%;float:left;text-align:center;margin-bottom:1.5em;">
+    		
+    		<div id="excounter" class="ex">
+    			<p class="title">Two direction counter</p> <br>
+    			<iframe class="video"
+    				src="https://www.youtube.com/embed/X1TEV7zgaOA" frameborder="0" allowfullscreen>
+    			</iframe> <br>
+				 <p style="display:block;margin:20px;" >
+				 	<a class="btn btn-primary" href="http://pluca.web.cern.ch/pluca/vhdl/vhdl_counter.html"> 
+				 	Go to page </a></p>
+    		</div>
+    		<div id="exmorse" class="ex">
+    			<p class="title" >Morse code displayer with selector </p> <br>
+    			<iframe class="video"
+    					src="https://www.youtube.com/embed/K3tMFG9YDqs" frameborder="0" allowfullscreen>
+    			</iframe> <br>
+				 <p style="display:block;margin:20px;" >
+				 	<a class="btn btn-primary" href="http://pluca.web.cern.ch/pluca/vhdl/vhdl_morse.html">
+				 	Go to page </a></p>
+    		</div>
+    		
+    	</div>
+    		
+    		
+    		<p style="display:block;width:100%;text-align:center;clear:both;" >
+    			In the pages you'll find the VHDL code used with some explanation.
+    		</p>
+    		<p style="display:block;margin:20px;width:100%;text-align:center;" >
+    			Many thanks to Umberto Marconi who gave me the board and started in me the interest for FPGAs.
+    		</p>
+    		
+    	<p style="margin-top:2.2em;margin-bottom:2em;font-weight:bold;text-align:center;text-decoration: underline;font-size:25px;">
+    	Look also: <a href="//pluca.web.cern.ch/pluca/vhdl/arduino.html"> "Fun with Arduino" </a></p>
+		</p>
+		
+	<!--div style="display:table;width:100%;">
+		<div class="fb-share-button" 
+		style="display:table-cell;"
+		data-href="http://pluca.web.cern.ch/pluca/vhdl/vhdl_home.html" 
+		data-layout="button">
+		</div>
+		<div class="fb-like" 
+		style="display:table-cell;"
+		data-href="http://pluca.web.cern.ch/pluca/vhdl/vhdl_home.html" 
+		data-layout="standard" 
+		data-action="like" 
+		data-show-faces="false">
+		</div>
+		<div style="margin:10px;float:right;position:relative;right:3em;">
+        	<a class="btn btn-success" 
+        	style="display:table-cell;" 
+        	href="http://pluca.webnode.com/">
+        	<span class="glyphicon glyphicon-home" style="margin-right:2px;">
+        	</span> Go back to Luca home.</a>
+    	</div>
+	</div-->
+	<div style="display:inline-block;width:100%;height:50px;padding:10px;position:relative;bottom:0;">
+		<div class="fb-share-button" 
+		style="position:absolute;top:0;bottom:0;left:0;"
+		data-href="//pluca.web.cern.ch/pluca/vhdl/vhdl_home.html" 
+		data-layout="button">
+		</div>
+		<div class="fb-like" 
+		style="position:absolute;top:0;bottom:0;left:100px;"
+		data-href="//pluca.web.cern.ch/pluca/vhdl/vhdl_home.html" 
+		data-layout="standard" 
+		data-action="like" 
+		data-show-faces="false">
+		</div>
+		<div style="position:absolute;top:0;bottom:0;right:2em;">
+        	<a class="btn btn-success" 
+        	style="hight:100%" 
+        	href="//pluca.webnode.com/">
+        	<span class="glyphicon glyphicon-home" style="margin-right:2px;">
+        	</span> Go back to Luca home.</a>
+    	</div>
+	</div>
+
+    </div>
+</body>
+
+</html>
+

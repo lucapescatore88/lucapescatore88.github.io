@@ -1,0 +1,130 @@
+<html>
+
+<head>
+<title>WebGL - Two rotating textures</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+<link rel="stylesheet" href="mystyle.css">
+<link rel="shortcut icon" href="icons/keyboard.ico" />
+
+<script type="text/javascript" src="../assets/js/glMatrix-0.9.5.min.js"></script>
+<script type="text/javascript" src="../assets/js/webgl-utils.js"></script>
+<script type="text/javascript" src="../assets/js/general-webgl-utils.js"></script>
+<script type="text/javascript" src="../assets/js/webgl_shapes.js"></script>
+
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+<script type="text/javascript">
+
+    var cube = new Shape("Cube");
+    cube.set_color([0.0,0.0,1.0,1.0]);
+
+    var cube2 = new Shape("Cube");
+    cube2.set_color([1.0,0.0,0.0,1.0]);
+
+    function initBuffers() {
+        cube.init(gl,"../uploads/lucy_danza.png");
+        cube2.init(gl,"../photos/luca.png");
+    }
+
+
+    var xRot = 0;
+    var yRot = 0;
+    var zRot = 0;
+
+    function drawScene() {
+        gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        gl.uniform1i(curShaderProgram.useModeUniform, 1);
+        
+        mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
+
+        mat4.identity(mvMatrix);
+
+        mvPushMatrix();
+        mat4.translate(mvMatrix, [0.0, 0.0, -5.0]);
+        mat4.rotate(mvMatrix, degToRad(yRot), [0, 1, 0]);
+        mat4.translate(mvMatrix, [-1.0, 0.0, 0.0]);
+        mat4.rotate(mvMatrix, degToRad(yRot), [0, 1, 0]);
+        
+        gl.disable(gl.BLEND);
+        //gl.depthMask(true);
+        gl.depthMask(true);
+        //gl.enable(gl.DEPTH_TEST);
+        
+        cube.draw(gl);
+        mvPopMatrix();
+        
+        mat4.identity(mvMatrix);
+        
+        mvPushMatrix();
+        mat4.translate(mvMatrix, [0.0, 0.0, -5.0]);
+        mat4.rotate(mvMatrix, degToRad(yRot), [0, 1, 0]);
+        mat4.translate(mvMatrix, [1.0, 0.0, 0.0]);
+        mat4.rotate(mvMatrix, degToRad(yRot), [0, 1, 0]);
+
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+        gl.enable(gl.BLEND);
+        gl.depthMask(false);
+        //gl.disable(gl.DEPTH_TEST);
+        
+        cube2.draw(gl);
+        mvPopMatrix();
+    }
+
+
+    var lastTime = 0;
+
+    function animate() {
+        var timeNow = new Date().getTime();
+        if (lastTime != 0) {
+            var elapsed = timeNow - lastTime;
+
+            xRot += (20 * elapsed) / 1000.0;
+            yRot += (20 * elapsed) / 1000.0;
+            zRot += (20 * elapsed) / 1000.0;
+        }
+        lastTime = timeNow;
+    }
+
+    function handleKeys(event) {};
+
+    function webGLStart() {
+        var canvas = document.getElementById("mycanvas");
+        initGL(canvas);
+        loadShaders("../assets/shaders/","textcol","no_light");
+        curShaderProgram = createShaderProgram("textcol","no_light",true);
+        initBuffers();
+
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.enable(gl.DEPTH_TEST);
+        gl.useProgram(curShaderProgram);
+        
+        tick();
+    }
+
+
+</script>
+
+
+</head>
+
+
+<body onload="webGLStart();">
+
+	<div class="container-narrow" style="text-align:center;">
+    <p class="main-title"> Two rotating textures </p>
+    <div style="text-align:center">
+        <canvas id="mycanvas" style="border: none;" width="500" height="500"></canvas>
+    </div>
+       <p style="margin:5mm;">
+        <a class="btn btn-success" href="http://pluca.web.cern.ch/pluca/webgl/webgl_home.html">Go back to WebGL home.</a>
+        <a class="btn btn-success" href="http://pluca.webnode.com/"><span class="glyphicon glyphicon-home" style="margin-right:2px;"></span> Go back to Luca home.</a>
+    </p>
+	</div>
+</body>
+
+</html>
+

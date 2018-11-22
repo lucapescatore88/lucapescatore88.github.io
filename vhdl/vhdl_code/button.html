@@ -1,0 +1,54 @@
+<html>
+<body>
+<pre>
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_unsigned.all;
+
+entity button is        -- Debounced button with a 20 ms debounce time.
+    generic(
+        clk_period : time := 20 ns;		-- clock period
+        debounce_time : time := 20 ms;	-- time after which the signal is considered stable
+        on_state : std_logic := '0'		-- pushed state (vs rest state)
+           );
+    port(
+    	input  : IN std_logic := '1';
+    	output : OUT std_logic := '1';
+    	clk    : IN  std_logic
+        );
+end button;
+
+architecture debounced_button of button is
+
+constant deb_cycles : integer := debounce_time / clk_period;	-- number of clock cycles in the debounce time
+signal count : integer range 0 to (deb_cycles + 1) := 0;
+signal state : std_logic := '0';
+
+begin
+
+	process(input, clk)
+	begin
+		if(rising_edge(clk)) then
+			if (input /= state) then			-- if the state changed reset the counter
+				count <= 0;
+				output <= not on_state;
+			elsif (count < deb_cycles) then		-- if the change isn't changed and 20 ms aren't passed increase the counter
+				count <= count + 1;
+				output <= not on_state;
+			elsif (count = deb_cycles and input = on_state) then	-- 20 ms of stability! --> output the "on state"
+				count <= count + 1;
+				output <= on_state;
+			else								-- If the button is not pressed ot the 20 ms 
+				output <= not on_state;			-- are passed and the button is still pressed  
+												-- keep it in off state.
+			end if;	
+		state <= input;
+	end if;
+	end process;
+	
+end debounced_button;
+
+</pre>
+</body>
+</html>

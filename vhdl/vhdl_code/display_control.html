@@ -1,0 +1,48 @@
+<html>
+<body>
+<pre>
+
+library ieee;
+use ieee.std_logic_1164.ALL;
+
+entity disp_control is
+	port(
+		num : IN   std_logic_vector(3 downto 0);
+		res : OUT  std_logic_vector(6 downto 0);
+		en  : IN   std_logic
+	);	
+end disp_control;
+
+
+architecture display_num of disp_control is
+
+    signal myres : std_logic_vector(6 downto 0) := "XXXXXXX"; 
+
+begin
+	process(num,en)	
+	begin
+		if en = '0' then
+			myres <= "ZZZZZZZ";
+		else
+           case num is			
+                when "0000" => myres <= "0111111";
+				when "0001" => myres <= "0110000";
+				when "0010" => myres <= "1011011";
+				when "0011" => myres <= "1001111";
+				when "0100" => myres <= "1100110";
+				when "0101" => myres <= "1011101";
+				when "0110" => myres <= "1111100";
+				when "0111" => myres <= "0000111";
+				when "1000" => myres <= "0111111";
+				when "1001" => myres <= "1100111";
+				when others => myres <= "0000000";				
+			end case;
+		end if;
+	end process;
+
+    res <= myres;
+end display_num;
+
+</pre>
+</body>
+</html>
