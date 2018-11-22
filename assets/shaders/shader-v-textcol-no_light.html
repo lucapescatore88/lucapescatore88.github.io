@@ -1,0 +1,20 @@
+//<!--script id="shader-v-textcol-no_light" type="x-shader/x-vertex"></script-->
+
+    attribute vec4 aVertexPosition;
+    attribute vec2 aTextureCoord;
+    attribute vec4 aVertexColor;
+    
+    uniform mat4 uMVMatrix;
+    uniform mat4 uPMatrix;
+    
+    varying vec2 vTextureCoord;
+    varying vec4 vColor;
+
+    void main() {
+        gl_Position = uPMatrix * uMVMatrix * aVertexPosition;
+        vColor = aVertexColor;
+        vTextureCoord = aTextureCoord;
+    }
+
+
+

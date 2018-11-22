@@ -1,0 +1,32 @@
+//<!-- Texture and color shaders, no lighting -->
+
+
+//<!--script id="shader-f-textcol-no_light" type="x-shader/x-fragment"-->
+    precision mediump float;
+    
+    uniform sampler2D uSampler;
+    uniform int uMode;
+   
+    varying vec2 vTextureCoord;
+    varying vec4 vColor;
+    
+    void main(void) {
+
+        vec4 fragmentColor;
+        if(uMode == 0) 
+        {
+            fragmentColor = vColor;
+        }
+        else if(uMode == 1)
+        {
+            fragmentColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
+        }
+        else 
+        {
+            fragmentColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t)) * vColor;
+        }
+        
+        gl_FragColor = fragmentColor;
+    }
+
+

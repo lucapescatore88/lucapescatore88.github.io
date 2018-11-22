@@ -1,0 +1,24 @@
+//<!-- Color shaders, per vertex lighting -->
+
+//<!--script id="shader-f-col-per_vtx_light" type="x-shader/x-fragment"-->
+    precision mediump float;
+
+    varying vec4 vColor;
+    varying vec3 vLightWeighting;
+    
+    uniform bool useBlending;
+    uniform float uAlpha;
+
+    void main(void) {
+        if(useBlending)
+        {
+            gl_FragColor = vec4(vColor.rgb * vLightWeighting, vColor.a*uAlpha);
+        }
+        else
+        {
+            gl_FragColor = vec4(vColor.rgb * vLightWeighting, vColor.a);
+        }
+    }
+
+
+

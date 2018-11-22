@@ -1,0 +1,57 @@
+//<!--script id="shader-v-col-per_vtx_light" type="x-shader/x-vertex"-->
+
+    attribute vec3 aVertexPosition;
+    attribute vec3 aVertexNormal;
+    attribute vec4 aVertexColor;
+
+    uniform mat4 uMVMatrix;
+    uniform mat4 uPMatrix;
+    uniform mat3 uNMatrix;
+
+    uniform vec3 uAmbientColor;
+
+    uniform vec3 uDirectLightingDirection;
+    uniform vec3 uDirectLightingColor;
+
+    uniform vec3 uPointLightingLocation;
+    uniform vec3 uPointLightingColor;
+
+    uniform bool uUseAmbientLight;
+    uniform bool uUseDirectLight;
+    uniform bool uUsePointLight;
+    
+    varying vec4 vColor;
+    varying vec3 vLightWeighting;
+
+    void main(void) {
+        vec4 mvPosition = uMVMatrix * vec4(aVertexPosition, 1.0);
+        gl_Position = uPMatrix * mvPosition;
+        vColor = aVertexColor;
+        
+        if (!uUseAmbientLight && !uUseDirectLight && !uUsePointLight) {
+            vLightWeighting = vec3(1.0, 1.0, 1.0);
+        } 
+        else {
+            vec3 pointLightDirection = normalize(uPointLightingLocation - mvPosition.xyz);
+            vec3 transformedNormal = uNMatrix * aVertexNormal;
+            
+            float directionalLightWeighting = 0.0;
+            float pointLightWeighting = 0.0;
+            float ambientLightWeighting = 0.0;
+            if(uUseDirectLight) {
+                ambientLightWeighting = 1.0;
+            }
+            if(uUseDirectLight) {
+                directionalLightWeighting = max(dot(transformedNormal, uDirectLightingDirection), 0.0);
+            }
+            if(uUsePointLight) {
+                pointLightWeighting = max(dot(transformedNormal, pointLightDirection), 0.0);
+            }
+            vLightWeighting = uAmbientColor * ambientLightWeighting 
+                    + uPointLightingColor * pointLightWeighting 
+                    + uDirectLightingColor * directionalLightWeighting;
+        }
+    }
+
+
+

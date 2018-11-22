@@ -1,0 +1,506 @@
+<script id="shader-f-textcol-per_frag_light" type="x-shader/x-fragment">
+  precision mediump float;
+
+  varying vec2 vTextureCoord;
+  varying vec3 vTransformedNormal;
+  varying vec4 vPosition;
+  varying vec4 vColor;
+  
+  uniform bool uUseAmbientLight;
+  uniform bool uUseSpecLight;
+  uniform bool uUseDirectLight;
+  uniform bool uUsePointLight;
+  uniform bool uUseEmissiveLight;
+    
+  uniform int  uMode;
+
+  uniform float uEmissivity;  
+  uniform float uAlpha;
+  uniform bool useBlending;
+  
+  uniform vec3 uAmbientColor;
+
+  uniform vec3 uPointLightingLocation;
+  uniform vec3 uPointLightingColor;
+  uniform float uMaterialShine;
+  
+  uniform vec3 uDirectLightingDirection;
+  uniform vec3 uDirectLightingColor;
+
+  uniform sampler2D uSampler;
+
+  void main(void) {
+
+    float curAlpha = 1.0;
+    vec3 lightWeighting = vec3(1.0, 1.0, 1.0);
+    vec4 fragmentColor;   
+    
+    // Mode: texture, color or both
+    if (uMode == 0) 
+    {
+        fragmentColor = vColor;
+    }
+    else if (uMode == 1)
+    {
+        fragmentColor = texture2D(uSampler, vTextureCoord);
+    }
+    else 
+    {
+        fragmentColor = texture2D(uSampler, vTextureCoord) * vColor;
+        //vec2(vTextureCoord.s, vTextureCoord.t));
+    }
+
+    // Lighting
+    if (uUseAmbientLight || uUseDirectLight || uUsePointLight)
+    {
+        vec3 normal = normalize(vTransformedNormal);
+        vec3 lightDirection = normalize(uPointLightingLocation - vPosition.xyz);
+    
+        float emissiveLightWeighting = 0.0;
+        float ambientLightWeighting = 0.0;
+        float directionalLightWeighting = 0.0;
+        float specularLightWeighting = 0.0;
+        float pointLightWeighting = 0.0;
+    
+        if(uUseAmbientLight) {
+            ambientLightWeighting = 1.0;
+        }
+        if(uUseDirectLight) {
+            directionalLightWeighting = max(dot(normal, uDirectLightingDirection), 0.0);
+        }
+        if(uUsePointLight) {
+            pointLightWeighting = max(dot(normal, lightDirection), 0.0);
+        
+            if (uUseSpecLight) {
+                vec3 eyeDirection = normalize(-vPosition.xyz);
+                vec3 reflectionDirection = reflect(-lightDirection, normal);        
+
+                specularLightWeighting = pow(max(dot(reflectionDirection, eyeDirection), 0.0), uMaterialShine);
+            }
+        }
+        if(uUseEmissiveLight) {
+            emissiveLightWeighting = uEmissivity;
+        }
+        
+        lightWeighting = uAmbientColor * ambientLightWeighting 
+                + uDirectLightingColor * directionalLightWeighting 
+                + uPointLightingColor  * pointLightWeighting 
+                + uPointLightingColor  * specularLightWeighting
+                + fragmentColor.rgb    * emissiveLightWeighting;
+    }
+        
+    // Blending
+    if(useBlending)
+    {
+        curAlpha = uAlpha;
+    }
+    
+    gl_FragColor = vec4(fragmentColor.rgb * lightWeighting, fragmentColor.a * curAlpha);
+    //gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
+}
+</script>
+
+<script id="shader-v-textcol-per_frag_light" type="x-shader/x-vertex">
+  attribute vec3 aVertexPosition;
+  attribute vec3 aVertexNormal;
+  attribute vec4 aVertexColor;
+  attribute vec2 aTextureCoord;
+  
+  uniform mat4 uMVMatrix;
+  uniform mat4 uPMatrix;
+  uniform mat3 uNMatrix;
+  
+  varying vec2 vTextureCoord;
+  varying vec3 vTransformedNormal;
+  varying vec4 vPosition;
+  varying vec4 vColor;
+
+  void main(void) {
+    vPosition = uMVMatrix * vec4(aVertexPosition, 1.0);
+    gl_Position = uPMatrix * vPosition;
+    vTextureCoord = aTextureCoord;
+    vTransformedNormal = uNMatrix * aVertexNormal;
+    vColor = aVertexColor;
+  }
+</script>
+
+<!-- Texture shaders, per vertex lighting -->
+
+<script id="shader-f-text-per_vtx_light" type="x-shader/x-fragment">
+    precision mediump float;
+
+    varying vec2 vTextureCoord;
+    varying vec3 vLightWeighting;
+
+    uniform bool useBlending;
+    uniform float uAlpha;
+
+    uniform sampler2D uSampler;
+
+    void main(void) {
+        vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
+        if(useBlending)
+        {
+            gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a * uAlpha);
+        }
+        else
+        {
+            gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a);            
+        }
+    }
+</script>
+
+<script id="shader-v-text-per_vtx_light" type="x-shader/x-vertex">
+    attribute vec3 aVertexPosition;
+    attribute vec3 aVertexNormal;
+    attribute vec2 aTextureCoord;
+
+    uniform mat4 uMVMatrix;
+    uniform mat4 uPMatrix;
+    uniform mat3 uNMatrix;
+
+    uniform vec3 uAmbientColor;
+
+    uniform vec3 uDirectLightingDirection;
+    uniform vec3 uDirectLightingColor;
+
+    uniform vec3 uPointLightingLocation;
+    uniform vec3 uPointLightingColor;
+
+    uniform bool uUseAmbientLight;
+    uniform bool uUseDirectLight;
+    uniform bool uUsePointLight;
+    
+    varying vec2 vTextureCoord;
+    varying vec3 vLightWeighting;
+
+    void main(void) {
+        vec4 mvPosition = uMVMatrix * vec4(aVertexPosition, 1.0);
+        gl_Position = uPMatrix * mvPosition;
+        vTextureCoord = aTextureCoord;
+        
+        if (!uUseAmbientLight && !uUseDirectLight && !uUsePointLight) {
+            vLightWeighting = vec3(1.0, 1.0, 1.0);
+        } 
+        else {
+            vec3 pointLightDirection = normalize(uPointLightingLocation - mvPosition.xyz);
+            vec3 transformedNormal = uNMatrix * aVertexNormal;
+            
+            float directionalLightWeighting = 0.0;
+            float pointLightWeighting = 0.0;
+            float ambientLightWeighting = 0.0;
+            if(uUseDirectLight) {
+                ambientLightWeighting = 1.0;
+            }
+            if(uUseDirectLight) {
+                directionalLightWeighting = max(dot(transformedNormal, uDirectLightingDirection), 0.0);
+            }
+            if(uUsePointLight) {
+                pointLightWeighting = max(dot(transformedNormal, pointLightDirection), 0.0);
+            }
+            vLightWeighting = uAmbientColor * ambientLightWeighting 
+                    + uPointLightingColor   * pointLightWeighting 
+                    + uDirectLightingColor  * directionalLightWeighting;
+        }
+    }
+</script>
+
+
+<!-- Color shaders, per vertex lighting -->
+
+<script id="shader-f-col-per_vtx_light" type="x-shader/x-fragment">
+    precision mediump float;
+
+    varying vec4 vColor;
+    varying vec3 vLightWeighting;
+    
+    uniform bool useBlending;
+    uniform float uAlpha;
+
+    void main(void) {
+        if(useBlending)
+        {
+            gl_FragColor = vec4(vColor.rgb * vLightWeighting, vColor.a*uAlpha);
+        }
+        else
+        {
+            gl_FragColor = vec4(vColor.rgb * vLightWeighting, vColor.a);
+        }
+    }
+</script>
+
+<script id="shader-v-col-per_vtx_light" type="x-shader/x-vertex">
+    attribute vec3 aVertexPosition;
+    attribute vec3 aVertexNormal;
+    attribute vec4 aVertexColor;
+
+    uniform mat4 uMVMatrix;
+    uniform mat4 uPMatrix;
+    uniform mat3 uNMatrix;
+
+    uniform vec3 uAmbientColor;
+
+    uniform vec3 uDirectLightingDirection;
+    uniform vec3 uDirectLightingColor;
+
+    uniform vec3 uPointLightingLocation;
+    uniform vec3 uPointLightingColor;
+
+    uniform bool uUseAmbientLight;
+    uniform bool uUseDirectLight;
+    uniform bool uUsePointLight;
+    
+    varying vec4 vColor;
+    varying vec3 vLightWeighting;
+
+    void main(void) {
+        vec4 mvPosition = uMVMatrix * vec4(aVertexPosition, 1.0);
+        gl_Position = uPMatrix * mvPosition;
+        vColor = aVertexColor;
+        
+        if (!uUseAmbientLight && !uUseDirectLight && !uUsePointLight) {
+            vLightWeighting = vec3(1.0, 1.0, 1.0);
+        } 
+        else {
+            vec3 pointLightDirection = normalize(uPointLightingLocation - mvPosition.xyz);
+            vec3 transformedNormal = uNMatrix * aVertexNormal;
+            
+            float directionalLightWeighting = 0.0;
+            float pointLightWeighting = 0.0;
+            float ambientLightWeighting = 0.0;
+            if(uUseDirectLight) {
+                ambientLightWeighting = 1.0;
+            }
+            if(uUseDirectLight) {
+                directionalLightWeighting = max(dot(transformedNormal, uDirectLightingDirection), 0.0);
+            }
+            if(uUsePointLight) {
+                pointLightWeighting = max(dot(transformedNormal, pointLightDirection), 0.0);
+            }
+            vLightWeighting = uAmbientColor * ambientLightWeighting 
+                    + uPointLightingColor * pointLightWeighting 
+                    + uDirectLightingColor * directionalLightWeighting;
+        }
+    }
+</script>
+
+
+<!-- Texture and color shaders, no lighting -->
+
+
+<script id="shader-f-textcol-no_light" type="x-shader/x-fragment">
+    precision mediump float;
+    
+    uniform sampler2D uSampler;
+    uniform int uMode;
+   
+    varying vec2 vTextureCoord;
+    varying vec4 vColor;
+    
+    void main(void) {
+
+        vec4 fragmentColor;
+        if(uMode == 0) 
+        {
+            fragmentColor = vColor;
+        }
+        else if(uMode == 1)
+        {
+            fragmentColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
+        }
+        else 
+        {
+            fragmentColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t)) * vColor;
+        }
+        
+        gl_FragColor = fragmentColor;
+    }
+</script>
+
+<script id="shader-v-textcol-no_light" type="x-shader/x-vertex">
+    attribute vec4 aVertexPosition;
+    attribute vec2 aTextureCoord;
+    attribute vec4 aVertexColor;
+    
+    uniform mat4 uMVMatrix;
+    uniform mat4 uPMatrix;
+    
+    varying vec2 vTextureCoord;
+    varying vec4 vColor;
+
+    void main() {
+        gl_Position = uPMatrix * uMVMatrix * aVertexPosition;
+        vColor = aVertexColor;
+        vTextureCoord = aTextureCoord;
+    }
+</script>
+
+
+<script id="shader-f-col-no_light" type="x-shader/x-fragment">
+    precision mediump float;
+    
+    varying vec4 vColor;
+    
+    uniform sampler2D uSampler;
+
+    void main() {
+        gl_FragColor = vColor;
+    }
+
+</script>
+
+<script id="shader-v-col-no_light" type="x-shader/x-vertex">
+    attribute vec4 aVertexPosition;
+    attribute vec4 aVertexColor;
+    
+    uniform mat4 uMVMatrix;
+    uniform mat4 uPMatrix;
+    
+    varying vec4 vColor;
+
+    void main() {
+        gl_Position = uPMatrix * uMVMatrix * aVertexPosition;
+        vColor = aVertexColor;
+    }
+</script>
+
+
+<script id="shader-f-text-no_light" type="x-shader/x-fragment">
+    precision mediump float;
+    
+    varying vec2 vTextureCoord;
+    
+    uniform sampler2D uSampler;
+
+    void main() {
+        gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
+    }
+
+</script>
+
+<script id="shader-v-text-no_light" type="x-shader/x-vertex">
+    attribute vec4 aVertexPosition;
+    attribute vec2 aTextureCoord;
+    
+    uniform mat4 uMVMatrix;
+    uniform mat4 uPMatrix;
+    
+    varying vec2 vTextureCoord;
+    
+    void main() {
+        gl_Position = uPMatrix * uMVMatrix * aVertexPosition;
+        vTextureCoord = aTextureCoord;
+    }
+</script>
+
+
+
+
+<!-- Shaders for 2D image processing -->
+
+
+<script id="shader-v-text-processing" type="x-shader/x-vertex">
+attribute vec2 aVertexPosition;
+attribute vec2 aTextureCoord;
+
+uniform vec2 uResolution;
+
+varying vec2 vTextureCoord;
+
+void main() {
+   // convert the rectangle from pixels to 0.0 to 1.0
+   vec2 zeroToOne = aVertexPosition / uResolution;
+
+   // convert from 0->1 to 0->2
+   vec2 zeroToTwo = zeroToOne * 2.0;
+
+   // convert from 0->2 to -1->+1 (clipspace)
+   vec2 clipSpace = zeroToTwo - 1.0;
+
+   gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+
+   vTextureCoord = aTextureCoord;
+}
+</script>
+
+
+<script id="shader-f-text-processing" type="x-shader/x-fragment">
+precision mediump float;
+
+uniform sampler2D uSampler;
+uniform vec2 uTextureSize;
+uniform float uKernel[9];
+
+varying vec2 vTextureCoord;
+
+void main() {
+   vec2 onePixel = vec2(1.0, 1.0) / uTextureSize;
+   vec4 colorSum =
+       texture2D(uSampler, vTextureCoord + onePixel * vec2(-1, -1)) * uKernel[0] +
+       texture2D(uSampler, vTextureCoord + onePixel * vec2( 0, -1)) * uKernel[1] +
+       texture2D(uSampler, vTextureCoord + onePixel * vec2( 1, -1)) * uKernel[2] +
+       texture2D(uSampler, vTextureCoord + onePixel * vec2(-1,  0)) * uKernel[3] +
+       texture2D(uSampler, vTextureCoord + onePixel * vec2( 0,  0)) * uKernel[4] +
+       texture2D(uSampler, vTextureCoord + onePixel * vec2( 1,  0)) * uKernel[5] +
+       texture2D(uSampler, vTextureCoord + onePixel * vec2(-1,  1)) * uKernel[6] +
+       texture2D(uSampler, vTextureCoord + onePixel * vec2( 0,  1)) * uKernel[7] +
+       texture2D(uSampler, vTextureCoord + onePixel * vec2( 1,  1)) * uKernel[8] ;
+   float kernelWeight =
+       uKernel[0] +
+       uKernel[1] +
+       uKernel[2] +
+       uKernel[3] +
+       uKernel[4] +
+       uKernel[5] +
+       uKernel[6] +
+       uKernel[7] +
+       uKernel[8] ;
+
+   if (kernelWeight <= 0.0) {
+     kernelWeight = 1.0;
+   }
+
+   gl_FragColor = vec4((colorSum / kernelWeight).rgb, 1);
+}
+</script>
+
+
+<script id="shader-v-text-image" type="x-shader/x-vertex">
+attribute vec2 aVertexPosition;
+attribute vec2 aTextureCoord;
+
+uniform vec2 uResolution;
+
+varying vec2 vTextureCoord;
+
+void main() {
+   // convert the rectangle from pixels to 0.0 to 1.0
+   vec2 zeroToOne = aVertexPosition / uResolution;
+
+   // convert from 0->1 to 0->2
+   vec2 zeroToTwo = zeroToOne * 2.0;
+
+   // convert from 0->2 to -1->+1 (clipspace)
+   vec2 clipSpace = zeroToTwo - 1.0;
+
+   gl_Position = vec4(clipSpace, 0, 1);
+   
+   vTextureCoord = aTextureCoord;
+}
+</script>
+
+
+<script id="shader-f-text-image" type="x-shader/x-fragment">
+precision mediump float;
+
+uniform sampler2D uSampler;
+
+varying vec2 vTextureCoord;
+
+void main() {
+   gl_FragColor = texture2D(uSampler, vTextureCoord);
+}
+</script>
+
+
+
