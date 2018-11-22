@@ -1,0 +1,351 @@
+import Tkinter as tk
+import random
+import numpy as np
+import random as rndm
+
+test_sq = [
+        [1,0,0,0,0,7,0,9,0],
+        [0,3,0,0,2,0,0,0,8],
+        [0,0,9,6,0,0,5,0,0],
+        [0,0,5,3,0,0,9,0,0],
+        [0,1,0,0,8,0,0,0,2],
+        [6,0,0,0,0,4,0,0,0],
+        [3,0,0,0,0,0,0,1,0],
+        [0,4,1,0,0,0,0,0,7],
+        [0,0,7,0,0,0,3,0,0]
+    ]
+        
+
+def make_tuple(thelist) :
+    return tuple(tuple(i) for i in thelist)
+
+def get_el(list, dic) :
+    return dic[make_tuple(list)]
+    
+
+class Game(object):
+
+    backup = None
+    block_size = 30
+    def __init__(self, parent):
+        parent.title('8 SQUARES GAME')
+        self.parent = parent
+        self.lbl_txt = ""
+        self.map = {}
+        self.keypressed = ''
+        self.setting = []
+        self.history = [None]
+        self.initialize_game()
+
+    def go_back(self) :
+        if self.history[-2] is not None :
+            self.board = self.history[-1]
+            del self.history[-1]
+            self.draw_board()
+        else :
+            self.my_lbl_txt.set("You are already at the beginning.")
+            self.bottom_frame.update_idletasks()
+
+    def subst(self,sq,x0,x1) :
+
+        res = []
+        for r in sq :
+            rr = []
+            for c in r :
+                rr.append(c)
+            res.append(rr)
+
+        v0 = res[x0[1]][x0[0]]
+        v1 = res[x1[1]][x1[0]]
+
+        res[x0[1]][x0[0]] = v1
+        res[x1[1]][x1[0]] = v0
+    
+        return res
+
+    def get_mini_sq(self,x,y) :
+
+        idx = int(x / 3)
+        idy = int(y / 3)
+        
+        minisq = [[0,0,0],[0,0,0],[0,0,0]];
+
+        for i in [0,1,2]:
+            for j in [0,1,2]:
+                minisq[i][j] = self.board[idx*3 + i][idy*3 + j]
+
+        return minisq
+
+    def key(self,event):
+        self.keypressed = event.char
+        if(len(self.setting) > 0 and str(self.keypressed) in ['1','2','3','4','5','6','7','8','9']) :
+            self.board[self.setting[1]][self.setting[0]] = int(self.keypressed)
+            self.setting = []
+            self.draw_board();
+            self.my_lbl_txt.set("")
+            self.bottom_frame.update_idletasks()
+            
+        return repr(event.char)
+
+    def set_number(self,sel, num = -1) :
+        if num == -1 :
+            self.board[sel[1]][sel[0]] = '?'
+            self.draw_board()
+            self.setting = sel
+            self.my_lbl_txt.set("Press a number between 1 and 9")
+            self.bottom_frame.update_idletasks()
+        else :
+            self.board[sel[1]][sel[0]] = int(num)
+
+    def check(self,num,r,c) :
+        for i in xrange(9):
+            if self.board[r][i] == num and i != c :
+                return False
+            if self.board[i][c] == num and i != r:
+                return False
+
+        minisq = self.get_mini_sq(r,c)
+        for i in [0,1,2]:
+            for j in [0,1,2]:
+                if minisq[i][j] == num and i != r and j != c:
+                    return False
+        return True
+
+
+    def get_pos(self,val,sq) :
+
+        if val < 0 or val > 9 :
+            print "Value", val, "not allowed"
+            return np.array([-1,-1])
+
+        for i,r in enumerate(sq) :
+            for j,c in enumerate(r) :
+                if c == val :
+                    return np.array([j,i])
+
+    def dist(self,sq) :
+
+        dist = 0
+        for i,r in enumerate(sq) :
+            for j,c in enumerate(r) :
+                if c > 0 :
+                    diff = self.get_pos(c,sq) - np.array([j,i])
+                    dist += abs(diff[0]) + abs(diff[1])
+        return dist
+
+    def save(self) : 
+        self.backup = self.save_status() 
+        self.my_lbl_txt.set("Situation saved")
+
+    def restore(self) :
+        self.save_status()
+        self.board = self.backup
+        self.draw_board()
+
+    def callback(self,event):
+        
+        if(len(self.setting)>0) :
+            return
+
+        X = self.get_pos(0,self.board)
+        sel = [int(event.x/30), int(event.y/30)]
+
+        self.my_lbl_txt.set("")        
+        self.save_status()    
+        if self.board[sel[1]][sel[0]] == 0 :
+            self.set_number(sel)
+        else :
+            self.set_number(sel,0)
+
+        self.draw_board()
+        self.bottom_frame.update_idletasks()        
+
+
+    def draw_board(self) :
+        for r,row in enumerate(self.board):
+            for c,el in enumerate(row):
+                    
+                tag=self.canvas.create_rectangle(self.block_size * c,
+                self.block_size * r,
+                self.block_size * (c + 1),
+                self.block_size * (r + 1), fill="white")
+                
+                if el > 0:
+                    text=self.canvas.create_text(self.block_size * (c + 0.5), self.block_size * (r + 0.5),
+                        text=str(el), font=("Purisa", 15))
+                elif el == -1 :
+                    text=self.canvas.create_text(self.block_size * (c + 0.5), self.block_size * (r + 0.5),
+                        text='?', font=("Purisa", 15))
+        
+        self.canvas.create_line(90,0,90,270,width = 5)
+        self.canvas.create_line(180,0,180,270, width = 5)
+        self.canvas.create_line(0,90,270,90, width = 5)
+        self.canvas.create_line(0,180,270,180, width = 5)
+        self.canvas.create_line(0,3,270,3)
+        self.canvas.create_line(3,0,3,270)
+
+
+    def initialize_game(self):
+    
+        #self.board = [[0] * 9] * 9
+        self.board = test_sq        
+        self.tmp = [[0] * 9] * 9
+                
+        self.top_frame1 = tk.Frame(self.parent)
+        self.top_frame1.pack(side=tk.TOP)
+        self.top_frame2 = tk.Frame(self.parent)
+        self.top_frame2.pack()
+
+        # add restart button on top frame
+        back_button = tk.Button(self.top_frame1, text='Back', width=15, command=self.go_back)
+        back_button.pack(side = tk.LEFT)
+        save_button = tk.Button(self.top_frame2, text='Save', width=15, command=self.save)
+        save_button.pack(side = tk.LEFT)
+        restore_button = tk.Button(self.top_frame2, text='Open saved', width=15, command=self.restore)
+        restore_button.pack(side = tk.RIGHT)
+        solve_button = tk.Button(self.top_frame1, text='Help me solve', width=15, command=self.fill_possible)
+        solve_button.pack(side = tk.RIGHT)
+        
+
+        self.middle_frame=tk.Frame(self.parent)
+        self.middle_frame.pack()
+
+        # create a canvas to draw our board on the top frame
+        self.canvas = tk.Canvas(self.middle_frame,
+        width=self.block_size * 9,
+        height=self.block_size * 9)
+        
+        # draw 3x3 visible blocks on the canvas
+        self.draw_board() 
+
+        self.canvas.bind("<Button-1>", self.callback)
+        self.canvas.pack()                  # register canvas with a geometry manager
+       
+        root.bind("<Key>", self.key)
+
+        # create bottom frame for group the label below
+        self.bottom_frame=tk.Frame(self.parent)
+        self.bottom_frame.pack(side=tk.BOTTOM)
+        
+        # create label for displaying game result text
+        self.my_lbl_txt = tk.StringVar()
+        self.my_lbl=tk.Label(self.bottom_frame, textvariable=self.my_lbl_txt)
+        self.my_lbl.pack()
+        self.my_lbl_txt.set("Set mode")
+
+        self.save()
+
+
+    def save_status(self) :
+
+        tmp = []
+        for r,row in enumerate(self.board):
+            tmp_row = []
+            for c,el in enumerate(row):
+                tmp_row.append(el)
+            
+            tmp.append(tmp_row)
+       
+        if(self.history[-1] is not tmp) :
+            self.history.append(tmp)
+        return tmp 
+
+    def reset_possdict(self) :
+        poss_dict = {}
+        for rr in xrange(9):
+            for cc in xrange(9):
+                poss_dict[str(rr)+":"+str(cc)] = []
+        return poss_dict
+    
+    def fill_possible(self) :
+
+        self.save_status()
+
+        added = []
+        dotry = True
+        poss_dict = self.reset_possdict();
+
+        while dotry :
+            dotry = False
+            poss_dict = self.reset_possdict();
+
+            # Check rows
+            for rr in xrange(9) :
+                for n in range(1,10):
+                    poss = []
+                    for cc in xrange(9):
+                        if self.board[rr][cc] == 0 and self.check(n,rr,cc):
+                            poss.append(cc)
+                            poss_dict[str(rr)+":"+str(cc)].append(n)
+
+                    if len(poss)==1 :
+                        self.board[rr][poss[0]] = n
+                        self.draw_board()
+                        dotry = True
+                        added.append({"rr": rr, "cc" : poss[0], "n" : n, "type" : "row"})
+            
+            #Check columns
+            for cc in xrange(9) :
+                for n in range(1,10):
+                    poss = []
+                    for rr in xrange(9):
+                        if self.board[rr][cc] == 0 and self.check(n,rr,cc):
+                            poss.append(rr)
+                            poss_dict[str(rr)+":"+str(cc)].append(n)
+
+                    if len(poss)==1 :
+                        self.board[poss[0]][cc] = n
+                        self.draw_board()
+                        dotry = True
+                        added.append({"cc": cc, "rr" : poss[0], "n" : n, "type" : "col"})
+        
+            #Check squares
+            for sq_r in [0,1,2] :
+                for sq_c in [0,1,2] :
+                    minisq = self.get_mini_sq(sq_r*3,sq_c*3)
+                    
+                    for n in range(1,10):
+                        poss = []
+                        for rr in [0,1,2] :
+                            for cc in [0,1,2] :
+                                if self.board[sq_r*3 + rr][sq_c*3 + cc] == 0 and self.check(n,sq_r*3 + rr,sq_c*3 + cc):
+                                    poss.append([sq_r*3 + rr,sq_c*3 + cc])
+                                    poss_dict[str(rr)+":"+str(cc)].append(n)
+
+                        if len(poss)==1 :
+                            self.board[poss[0][0]][poss[0][1]] = n
+                            self.draw_board()
+                            dotry = True
+                            added.append({"cc": poss[0][1], "rr" : poss[0][0], "n" : n, "type" : "sq"})
+  
+        printed = False
+        num = 1
+        print "No more numbers can be put for sure. You need add one."
+        print "Suggestions follow: boxes with a minimum numer of possibilities."
+        print "N.B.: Rows and columns are numbered from 0 to 8."
+        print "[Row:colum] \tPossible numbers"
+        while not printed :
+            for key, val in poss_dict.iteritems():
+                curset = set(val)
+                if len(curset) == num :
+                    print "  ["+key+"]\t\t  ", curset
+                    printed = True
+            num+=1
+                
+        self.my_lbl_txt.set("Added " + str(len(added)) + " numbers.")
+            
+
+
+    def board_full(self):
+        return (None not in self.board)
+
+    def reset(self):
+        self.board = goal
+        self.draw_board()
+            
+if __name__ == '__main__':
+    
+    root = tk.Tk()  # Instantiate a root window
+    my_game = Game(root)  # Instantiate a Game object
+    root.mainloop()  # Enter the main event loop
+

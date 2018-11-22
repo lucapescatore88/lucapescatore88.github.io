@@ -1,0 +1,346 @@
+<html>
+
+<head>
+<title>Programs</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+<link href='http://pluca.web.cern.ch/pluca/assets/font-awesome-4.5.0/css/font-awesome.css' rel='stylesheet'/>
+ 
+<link rel="stylesheet" href="programs_style.css">
+<link rel="shortcut icon" href="../photos/programs.ico" />
+
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+<script src="http://pluca.web.cern.ch/pluca/structure.js"></script>
+<script src="http://pluca.web.cern.ch/pluca/assets/js/build_index.js"></script>
+
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/it_IT/sdk.js#xfbml=1&version=v2.0";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));
+</script>
+
+<style>
+.program {
+	display:table;
+	width:100%; }
+	
+#index {
+	font-size:1.5em;
+	}
+</style>
+
+</head>
+
+<body onload="build_index('program','index');">
+
+	<div class="main_menu" id="main_menu"></div>
+
+	<div class="container-narrow" id="main-content">
+    	<p class="main-title" style="width=100%;display:block;"> Algorithms and games </p> <br>
+    	
+    	<p style="display:block;" >
+    		I'm a programmer and I have fun programming. So here are a few of the
+    		little programs I developed. All you'll find here is programmed in python. Have fun!
+    	</p>
+    	
+    	<div id="index"></div>
+
+		<div class="program" id="pg_8square" text="Sliding puzzle">
+    		
+    		<p class="pgtitle" >Sliding puzzle</p>
+    		
+    			<img src="images/8square.png"></img>
+    			
+    			<p style="text-align:left;margin:20px">
+    				Here is a sliding puzzle game. With automatic solver!
+    				The graphics is done with 
+    				<a href="http://www.tutorialspoint.com/python/python_gui_programming.htm"><code>TKinter</code></a>
+    				(as in all other programs).
+    				I made this little program while learning the 
+    				<a href="https://en.wikipedia.org/wiki/A*_search_algorithm">A* search algorithm</a>.
+    				In fact to solve the puzzle the program goes to a tree of possible moves
+    				searching for the winning branch. Checking all possible branches
+    				can be extremely computationally expensive. The A* algorithm boosts the search in the following way:
+    			</p>
+    				<ul style="text-align:left;margin:20px">
+    					<li>Book-keeping: if a move was already expanded do not expand it again;</li>
+    					<li>Guided search: we can evaluate the distance to the goal and expand nodes with a smaller distance first.
+    					<br>For example one can use the number of misplaced tiles as an estimate.
+    					<br>In this case a <a href="https://heuristicswiki.wikispaces.com/Manhattan+Distance">Manhattan distance</a>
+    					heuristic is used.
+    					</li>
+    			    </ul>
+    			<p style="text-align:left;margin:20px">Note that the search is limited at 10000 iterations
+    			(takes about 10-15 seconds on my Mac). It successfully solved boards with up to 31 moves to reach
+    			the goal. But in quite some situations more than ~30 moves are required. In that case it won't find a solution.
+    			You can try to help it a bit though putting at least the easy boxes in place!
+    			It will lower a lot the search space. </p>
+    			
+    				<p style="margin:5mm;display:inline-block;">
+        			<a class="btn btn-success" 
+        				href="http://pluca.web.cern.ch/pluca/programs/8square/8square.txt" download="8square.py"
+        				style="float:right;margin-left:10px;" >
+        			<span class="glyphicon glyphicon-list" style="margin-right:2px;">
+        			</span> Download script</a>
+        			<a class="btn btn-success" 
+        				style="float:left;" 
+        				href="http://pluca.web.cern.ch/pluca/programs/8square/8square.zip">
+        			<span class="fa fa-desktop" style="margin-right:2px;">
+        			</span> Download Mac app</a>
+        			</p>
+        			
+        			<p style="display:block;clear:both;text-align:left;margin:20px;">The script is light-weight 
+        			and can be run by <code>python 8square.py</code>
+        			but you have to take care that all needed libraries are present.</p>
+    	</div>
+    	
+    	<div class="program" id="pg_sudoku" text="Sudoku">
+    		<p class="pgtitle" >Sudoku</p>
+    		
+    			<img src="images/sudoku_big.png"></img>
+    			
+    			<p style="text-align:left;margin:20px">
+    			I was at <a href="http://moriond.in2p3.fr"> Moriond</a> conference some time ago 
+    			and there was a challenge: a <a href="https://en.wikipedia.org/wiki/Sudoku"> sudoku</a> to solve.
+    			It was a really really hard one! So I decided to practice my newly learned graphics skills
+    			to implement a sudoku with solving helper. The helper fills all numbers which
+    			have a defined unique value. It does this by going though each box and finding which
+    			numbers can go in a box. If only one can work the number is added.
+    			The algorithm simply continues looping over all boxes until no move is possible any more.
+    			This does not always solve the sudoku. Often it comes a moment were no box has a unique possibility.
+    			In that case you can try find a number or just fill one of the empty boxes at random and then try the
+    			solve button again! Never mind, if you go wrong you can always go back!
+    			And by the way: I did it! I soved it. In just 2 days starting from scratch. But I was beaten by a human solver.
+    				</p>
+    			
+    				<p style="margin:5mm;display:inline-block;">
+        			<a class="btn btn-success" 
+        				href="http://pluca.web.cern.ch/pluca/programs/sudoku/sudoku.txt" download="sudoku.py"
+        				style="float:right;margin-left:10px;" >
+        			<span class="glyphicon glyphicon-list" style="margin-right:2px;">
+        			</span> Download script</a>
+        			<a class="btn btn-success" 
+        				style="float:left;" 
+        				href="http://pluca.web.cern.ch/pluca/programs/sudoku/sudoku.zip">
+        			<span class="fa fa-desktop" style="margin-right:2px;">
+        			</span> Download Mac app</a>
+        			</p>
+        			
+        			<p style="display:block;clear:both;text-align:left;margin:20px;">The script is light-weight
+        			and can be run by <code>python sudoku.py</code>
+        			but you have to take care that all needed libraries are present.</p>
+    	</div>
+    		
+    		
+    <div class="program" id="pg_asciiart" text="ASCII art">
+    		<p class="pgtitle" >ASCII art</p>
+    		
+    			<img src="images/me_ascii.png" width=300px></img>
+    			
+    			<p style="text-align:left;margin:20px">
+    			This is simple but nice! I just wanted to lean how to display images in
+    			python and do stuff with their pixels. And here you go! The script here
+    			described transforms .png and .jpg in ASCII art in the following way:
+    			</p>
+    			<ul style="text-align:left;margin:20px">
+    				<li> Used TKinter to let you browse images and open them</li>
+    				<li> Uses PIL to resize the image to a 160x160 square and make it black and white</li>
+    				<li> Loops over the pixels and extracts their luminosity</li>
+    				<li> I defined 7 luminosity bands which are associated to "emptier"
+    				to "fuller" ASCII characters </li>
+    			</ul>
+    			<p style="text-align:left;margin:20px">
+    			And the game is done. The script will produce a {figure-name}.txt file
+    			that will contain your image converted into ASCII art!</p>
+    				
+    				<p style="margin:5mm;display:inline-block;">
+        			<a class="btn btn-success" 
+        				href="http://pluca.web.cern.ch/pluca/programs/img_to_ascii/img_to_ascii.txt" download="8square.py"
+        				style="margin-left:10px;" >
+        			<span class="glyphicon glyphicon-list" style="margin-right:2px;"></span>
+        			Download script </a>
+        			<a class="btn btn-success" 
+        				href="http://pluca.web.cern.ch/pluca/programs/img_to_ascii/img_to_ascii.zip" download="8square.py"
+        				style="margin-left:10px;" >
+        			<span class="fa fa-desktop" style="margin-right:2px;">
+        			</span> Download Mac app</a>
+        			</p>
+        			
+        			<p style="display:block;clear:both;text-align:left;margin:20px;">The script is light-weight and can be 
+        			run by <code>python img_to_ascii.py</code>
+        			but you have to take care that all needed libraries are present. In particular you'll need PIL or Pillow.
+        			On Mac do "pip install pillow".</p>
+    	</div>		
+    	
+    	 <div class="program" id="pg_machinelearning" text="Machine Learning (Neural Networks and BDTs)">
+    		<p class="pgtitle" >Machine learning</p>
+    		
+    			<img src="images/machinelearning.png"></img>
+    			
+    			<p style="text-align:left;margin:20px">
+    			In my work as a PhD in physics I did a lot of data analysis and we used
+    			many machine learning tools such as 
+    			<a href="http://neuralnetworksanddeeplearning.com/chap1.html">Neural Networks</a> 
+    			and <a href="https://en.wikipedia.org/wiki/Decision_tree_learning">Boosted Decision Trees</a>.
+    			but I was really bugged by the fact that they were just black boxes to me.
+    			So I decided to build a BDT! This program let't you load sets of points
+    			some categorised as "signal" and "background". Then it uses a BDT to find the
+    			best separation between them. A neural network is also on the way but not ready
+    			yet so don't push the "Neural Net" button!!
+    			Before going to the facts I must acknowledge who taught me about machine learning which is 
+    			<a href="http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-034-artificial-intelligence-fall-2010/lecture-videos/">this course</a> 
+    			from the <a href="http://ocw.mit.edu/index.htm">MIT OpenCourseWare</a>.
+    			    				
+    				<p style="margin:5mm;display:inline-block;">
+        			<a class="btn btn-success" 
+        				href="http://pluca.web.cern.ch/pluca/programs/machine_learning/README.txt" download="README.txt"
+        				style="margin-left:10px;" >
+        			<span class="glyphicon glyphicon-book" style="margin-right:2px;">
+        			</span> Download README file</a>
+       				</p>
+    				<p style="margin:5mm;display:inline-block;">
+        			<a class="btn btn-success" 
+        				href="http://pluca.web.cern.ch/pluca/programs/machine_learning/machine_learning_app.zip"
+        				style="margin-left:10px;" >
+        			<span class="glyphicon glyphicon-list" style="margin-right:2px;">
+        			</span> Download script</a>
+        			</p>
+    				<p style="margin:5mm;display:inline-block;">
+        			<a class="btn btn-success" 
+        				href="http://pluca.web.cern.ch/pluca/programs/machine_learning/machine_learning_app.zip"
+        				style="margin-left:10px;" >
+        			<span class="fa fa-desktop" style="margin-right:2px;">
+        			</span> Download Mac app</a>
+        			</p>
+        			
+        			<p style="display:block;clear:both;text-align:left;margin:20px;">The script is 
+        			light-weight and can be run by uncompressing the folder and <code>python machine_learning.py</code>.
+        			Leave it in the same folder. You have to take care that all needed libraries are present
+        			but it should work as is on most macs or linux machines.</p>
+    	</div>		
+		
+		<div class="program" id="pg_tracking" text="Tracking and retinas">
+    		<p class="pgtitle" >Tracking</p>
+    		
+    			<img src="tracking/retina.png" width=400px></img>
+    			
+    			<p style="text-align:left;margin:20px">
+    			In high energy physics experiments we are all about tracking. Particles are very little and not
+    			visible by eye. But when they traverse silicon they leave bunches of free electrons behing which can
+    			be detected. So what we actually see is a series of "hits" in various silicon layers which we have to
+    			put together to reconstruct the track of the particle and from that it's properties.
+    			This little program defines a geometri of 20 layers and you can produce hits.
+    			You can decide how many track to have in the same event and you can add noise.
+    			Finally pushing "Analyse" an algorithm is run that identifies tracks.
+    			You can find details about how it works <a href="http://arxiv.org/pdf/1409.3466v1.pdf"> here</a>.
+    			The basic idea is to make a grid of all possible track parameters and weight them 
+    			depending on how close those tracks would be to the hits we have. This produced peaks in the
+    			reatina which can be used to identify tracks. This is not a software-level efficient algorithm
+    			but it is very simple and can he implemented in hardware.
+    			    				
+    				<p style="margin:5mm;display:inline-block;">
+        			<!--a class="btn btn-success" 
+        				href="http://pluca.web.cern.ch/pluca/programs/machine_learning/README.txt" download="README.txt"
+        				style="margin-left:10px;" >
+        			<span class="glyphicon glyphicon-book" style="margin-right:2px;">
+        			</span> Download README file</a>
+       				</p-->
+    				<p style="margin:5mm;display:inline-block;">
+        			<a class="btn btn-success" 
+        				href="http://pluca.web.cern.ch/pluca/programs/tracking/retina.zip"
+        				style="margin-left:10px;" >
+        			<span class="glyphicon glyphicon-list" style="margin-right:2px;">
+        			</span> Download script</a>
+        			</p>
+    				<p style="margin:5mm;display:inline-block;">
+        			<a class="btn btn-success" 
+        				href="http://pluca.web.cern.ch/pluca/programs/tracking/tracking.zip"
+        				style="margin-left:10px;" >
+        			<span class="fa fa-desktop" style="margin-right:2px;">
+        			</span> Download Mac app</a>
+        			</p>
+        			
+        			<p style="display:block;clear:both;text-align:left;margin:20px;">The script is 
+        			light-weight and can be run by uncompressing the folder and <code>python tracking.py</code>.
+        			Leave it in the same folder. You have to take care that all needed libraries are present.
+        			In particular you need PIL or Pillow and matplotlib.</p>
+    	</div>		
+		
+		<div class="program" id="pg_experiment" text="Playing the Rutherford experiment">
+    		<p class="pgtitle" >Playing the Rutherford experiment</p>
+    		
+    			<img src="experiment/experiment.png" width=700px></img>
+    			
+    			<p style="text-align:left;margin:20px">
+    			For the EPFL open day I was asked to make a little program to explain the Rutherford
+    			experiment to kids. This experiment is about the structure of the atom.
+    			Physicists believed that the atom was a uniformly filled sphere and Rutherford wanted 
+    			to test this hypothesis. He threw alpha particles at gold atoms and found that
+    			some would go though while others would rebound. This can be explained
+    			by a structure made by a hard nucleus at the middle and mostly empty space outside:
+    			the planetary model of the atom was born! The program simulates the experiment
+    			by throwing marbles at shapes of different form. Can you spot which shape it is
+    			from the distribution of the positions where the marbles fall? Have a try!
+    			The game is also available in 4 languages!
+    			    				
+    				<p style="margin:5mm;display:inline-block;">
+    				<p style="margin:5mm;display:inline-block;">
+        			<a class="btn btn-success" 
+        				href="http://pluca.web.cern.ch/pluca/programs/experiment/experiment_scripts.tar"
+        				style="margin-left:10px;" >
+        			<span class="glyphicon glyphicon-list" style="margin-right:2px;">
+        			</span> Download script</a>
+        			</p>
+    				<p style="margin:5mm;display:inline-block;">
+        			<a class="btn btn-success" 
+        				href="http://pluca.web.cern.ch/pluca/programs/experiment/experiment.tar"
+        				style="margin-left:10px;" >
+        			<span class="fa fa-desktop" style="margin-right:2px;">
+        			</span> Download Mac app</a>
+        			</p>
+        			
+        			<p style="display:block;clear:both;text-align:left;margin:20px;">The script is 
+        			light-weight and can be run by uncompressing the .tar and then <code>python experiment.py</code>.
+        			Leave it in the same folder. You have to take care that all needed libraries are present.
+        			In particular you need TKinter and matplotlib 1.5 or higher.</p>
+    	</div>
+	
+        <div class="program" id="tools" text="Interesting tools">
+        <p class="pgtitle">Interesting tools </p>
+         <div style="text-align:center;font-size:20px">Use python in combination with Excel with Pyxill! <br>
+            <a href="https://www.pyxll.com/blog/tools-for-working-with-excel-and-python"/>Pyxill at this link</a></div>
+        </div>
+
+	<div style="display:table;width:100%;">
+	<div class="fb-share-button" 
+		style="display:table-cell;"
+		data-href="http://pluca.web.cern.ch/pluca/vhdl/vhdl_home.html" 
+		data-layout="button">
+	</div>
+	<div class="fb-like" 
+		style="display:table-cell;"
+		data-href="http://pluca.web.cern.ch/pluca/vhdl/vhdl_home.html" 
+		data-layout="standard" 
+		data-action="like" 
+		data-show-faces="false">
+	</div>
+	<p style="margin:5mm;float:right;">
+        <a class="btn btn-success" 
+        style="display:table-cell;" 
+        href="http://pluca.webnode.com/">
+        <span class="glyphicon glyphicon-home" style="margin-right:2px;">
+        </span> Go back to Luca home.</a>
+    </p>
+	</div>
+
+    </div>
+</body>
+
+</html>
+

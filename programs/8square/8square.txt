@@ -1,0 +1,337 @@
+import Tkinter as tk
+import random
+import numpy as np
+import math
+
+goal = [[0,1,2],[3,4,5],[6,7,8]]
+goal_tuple = tuple(tuple(i) for i in goal)
+tupgoal = tuple(tuple(i) for i in goal)
+goal_dict = {}
+for xx in [0,1,2] :
+    for yy in [0,1,2] :
+        goal_dict[goal[xx][yy]] = [xx,yy]
+
+def make_tuple(thelist) :
+    return tuple(tuple(i) for i in thelist)
+
+def get_el(list, dic) :
+
+    return dic[make_tuple(list)]
+    
+
+class Game(object):
+
+    block_size = 100
+    def __init__(self, parent):
+        parent.title('8 SQUARES GAME')
+        self.parent = parent
+        self.lbl_txt = ""
+        self.map = {}
+        
+        self.initialize_game()
+
+    def subst(self,sq,x0,x1) :
+
+        res = []
+        for r in sq :
+            rr = []
+            for c in r :
+                rr.append(c)
+            res.append(rr)
+
+        v0 = res[x0[1]][x0[0]]
+        v1 = res[x1[1]][x1[0]]
+
+        res[x0[1]][x0[0]] = v1
+        res[x1[1]][x1[0]] = v0
+    
+        return res
+
+    def get_pos(self,val,sq) :
+
+        if val < 0 or val > 9 :
+            print "Value", val, "not allowed"
+            return np.array([-1,-1])
+
+        for i,r in enumerate(sq) :
+            for j,c in enumerate(r) :
+                if c == val :
+                    return np.array([j,i])
+
+    def count_inversions(self,x,y,sq) :
+        inversions = 0;
+        tile = y * 3 + x;
+        tile_value = sq[x][y];
+        if not tile_value : return 0
+        for q in range(tile,9) :
+            yy = q % 3
+            xx = int(math.floor(q / 3))
+            comp_value = sq[xx][yy]
+            if (tile_value > comp_value and comp_value): inversions+=1;
+        #    print xx, yy, "  values =>", tile_value, comp_value, "  inversions =>", inversions
+        return inversions
+
+    def sum_inversions(self,sq) :
+        inversions = 0;
+        for j in range(0,3) :
+            for i in range(0,3) :
+                inversions += self.count_inversions(i,j,sq)
+        #print "Total inversions ", inversions
+        return inversions
+    
+    def is_solvable(self,sq) :
+        return (self.sum_inversions(sq) % 2 == 0)
+
+    def check_conflict(self,row,n1,n2) :
+        el = []
+        el.append(row.index(n1))
+        el.append(row.index(n2))
+        gel = []
+        gel.append(goal_dict[n1][1])
+        gel.append(goal_dict[n2][1])
+        if(el[0] > gel[0] and el[1] < gel[1] ) :
+            return True
+        return False
+
+    def linear_conflicts(self,sq) :
+
+        dist = 0
+        for i,r in enumerate(sq) :
+            common = list(set(r).intersection(goal[i]))
+            #print r, goal[i], common
+            if(len(common) == 2) :
+                if(self.check_conflict(r,common[0],common[1])) :
+                    dist += 2
+          #          print "Conflict"
+            if(len(common) == 3) :
+                if(self.check_conflict(r,common[0],common[1])) :
+                    dist += 2
+        #            print "Conflict"
+                elif(self.check_conflict(r,common[0],common[2])) :
+                    dist += 2
+        #            print "Conflict"
+                elif(self.check_conflict(r,common[1],common[2])) :
+                    dist += 2
+        #            print "Conflict"
+        #print "DIst = ", dist 
+        return dist
+
+    def dist(self,sq) :
+
+        dist = 0
+        
+        for i,r in enumerate(sq) :
+            for j,c in enumerate(r) :
+                dist += abs(i - goal_dict[c][0]) + abs(j - goal_dict[c][1])
+                #print "Finding", c, i, j, goal_dict[c], abs(i - goal_dict[c][0]) + abs(j - goal_dict[c][1]) 
+        #dist += self.linear_conflicts(sq)
+        return dist
+
+    def callback(self,event):
+        
+        X = self.get_pos(0,self.board)
+        sel = [int(event.x/100), int(event.y/100)]
+        distance = abs(X[0]-sel[0]) + abs(X[1]-sel[1])
+        
+        self.my_lbl_txt.set("")
+        if distance == 1 :
+            self.board = self.subst(self.board,X,[int(event.x/100), int(event.y/100)])
+            self.draw_board()
+            if self.board == goal :    
+                self.my_lbl_txt.set("YOU WIN!!!!")
+
+        else :
+            self.my_lbl_txt.set("Invalid move!")
+            
+        self.bottom_frame.update_idletasks()
+        
+    def draw_board(self) :
+        for r,row in enumerate(self.board):
+            for c,el in enumerate(row):
+                if el == 0 :
+                    color = "grey"
+                else :
+                    color = "red"
+                    
+                tag=self.canvas.create_rectangle(self.block_size * c,
+                self.block_size * r,
+                self.block_size * (c + 1),
+                self.block_size * (r + 1), fill=color)
+
+                if color == "red" :
+                    text=self.canvas.create_text(self.block_size * (c + 0.5), self.block_size * (r + 0.5),
+                        text=str(el), font=("Purisa", 30))
+
+    def initialize_game(self):
+    # These are the initializations that need to happen
+    # at the beginning and after restarts
+        self.board = [[0,1,2],[3,4,5],[6,7,8]]
+        
+        self.top_frame = tk.Frame(self.parent)
+        self.top_frame.pack(side=tk.TOP)
+
+        # add restart button on top frame
+        restart_button = tk.Button(self.top_frame, text='Reset', width=10, command=self.reset)
+        restart_button.pack(side = tk.LEFT)
+        shaffle_button = tk.Button(self.top_frame, text='Shaffle', width=10, command=self.shaffle)
+        shaffle_button.pack(side = tk.RIGHT)
+        shaffle_button = tk.Button(self.top_frame, text='Solve', width=10, command=self.solve)
+        shaffle_button.pack(side = tk.RIGHT)
+
+        self.middle_frame=tk.Frame(self.parent)
+        self.middle_frame.pack()
+
+        # create a canvas to draw our board on the top frame
+        self.canvas = tk.Canvas(self.middle_frame,
+        width=self.block_size * 3,
+        height=self.block_size * 3)
+        
+        # draw 3x3 visible blocks on the canvas
+        self.draw_board() 
+
+        self.canvas.bind("<Button-1>", self.callback)
+        self.canvas.pack()                  # register canvas with a geometry manager
+        
+        # create bottom frame for group the label below
+        self.bottom_frame=tk.Frame(self.parent)
+        self.bottom_frame.pack(side=tk.BOTTOM)
+        
+        # create label for displaying game result text
+        self.my_lbl_txt = tk.StringVar()
+        self.my_lbl=tk.Label(self.bottom_frame, textvariable=self.my_lbl_txt)
+        self.my_lbl.pack()
+
+
+
+
+    def board_full(self):
+        return (None not in self.board)
+
+    def reset(self):
+        self.board = goal
+        self.draw_board()
+            
+    def shaffle(self):
+        self.reset()
+        res = []
+        while (len(res) == 0 or not self.is_solvable(self.board)) :
+            num = range(0,9)
+            res = []
+            for r in self.board :
+                rr = []
+                for c in r :
+                    newc = rndm.choice(num)
+                    #print newc, num
+                    #print num.index(newc)
+                    num.remove(newc)
+                    rr.append(newc)
+                res.append(rr)
+            self.board = res
+
+        self.draw_board()
+
+    def gen_moves(self,sq) :
+
+        posX = self.get_pos(0,sq)
+        x = posX[0]
+        y = posX[1]
+        moves = []
+
+        if x > 0 : 
+            moves.append(make_tuple(self.subst(make_tuple(sq),[x,y],[x-1,y])))
+        if y > 0 :
+            moves.append(make_tuple(self.subst(make_tuple(sq),[x,y],[x,y-1])))
+        if x < 2 :
+            moves.append(make_tuple(self.subst(make_tuple(sq),[x,y],[x+1,y])))
+        if y < 2 :
+            moves.append(make_tuple(self.subst(make_tuple(sq),[x,y],[x,y+1])))
+
+        return moves
+
+
+
+    def solve(self) :
+
+        start = make_tuple(self.board)        
+        open_set = [ start ]
+        mymap = { start : None }
+        ext_list = []
+        it = 0
+        dist_past  = { start : 0 }
+        start_dist = self.dist(self.board)
+        heuristic  = { start : start_dist } ## dist walked + dist to goal
+        move_dists = { start : start_dist }
+
+        minheu = 1e9
+        while len(open_set) > 0 :
+            
+            curnode = open_set.pop(0)
+            if curnode == tupgoal :
+                print "YOU WIN!!"
+                print "Solved in", iter, "iterations"
+                total_path = [curnode]
+                while curnode is not None :
+                    curnode = mymap[curnode]
+                    if curnode is not None :
+                        total_path.append(curnode)
+                for i,e in enumerate(reversed(total_path)) :
+                    print i+1, ") \n"
+                    for row in e :
+                        print row
+                    print
+                return total_path
+
+            it += 1
+            ext_list.append(curnode)
+
+            if(len(open_set)>0):
+                minheu = heuristic[open_set[0]]
+            
+            for move in self.gen_moves(curnode) :
+                if move in ext_list :
+                    continue
+                
+                tmp_dist = dist_past[curnode] + 1
+                move_dist = self.dist(move)
+                if move not in open_set and move_dist < start_dist+3:
+                    mymap[move] = curnode
+                    dist_past[move] = tmp_dist
+                    h = tmp_dist + move_dist
+                    heuristic[move] = h
+                    move_dists[move] = move_dist
+                    if move not in open_set :
+                        if h < minheu :
+                            minheu = h
+                            open_set.insert(0,move)
+                        else :
+                            open_set.append(move)
+            
+            #min = 1e9
+            #index = 0
+            #for i,n in enumerate(open_set) :
+            #    h = heuristic[n]
+            #    if h < min:
+            #        min = h
+            #        index = i
+            
+            #if index > 0 :
+            #    minh = open_set.pop(index)
+            #    open_set.insert(0,minh)
+
+            if len(open_set) == 0:
+                print "No open sets left..."
+            if it > 10000 :
+                print "Sorry can't solve it... :-("
+                break
+            #print iter 
+            
+
+        return None
+        
+    
+if __name__ == '__main__':
+    
+    root = tk.Tk()  # Instantiate a root window
+    my_game = Game(root)  # Instantiate a Game object
+    root.mainloop()  # Enter the main event loop
+

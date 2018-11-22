@@ -1,0 +1,99 @@
+import os
+import re
+import random
+from bisect import bisect
+from PIL import Image
+import Tkinter as tk, tkFileDialog, ImageTk
+
+class Img_to_ascii(object) :
+
+    def __init__(self, window) :
+       
+        self.window = window
+        self.image = None
+        self.path = None
+        
+        self.window.title("Image to ASCII art!")
+
+        self.buttons_frame = tk.Frame(self.window)
+        self.buttons_frame.pack(side=tk.TOP)
+        
+        open_button = tk.Button(self.buttons_frame, text='Open image', width=15, command=self.open_image)
+        open_button.pack(side = tk.LEFT)
+        convert_button = tk.Button(self.buttons_frame, text='Convert ASCI art', width=15, command=self.convert_image)
+        convert_button.pack(side = tk.RIGHT)
+        
+        self.image_frame = tk.Frame(self.window)
+        self.image_frame.pack(side=tk.BOTTOM)
+        #self.image_frame.geometry("160x70")
+        #self.image_frame.configure(background='grey')
+
+    def open_image(self) :
+        
+        file = tkFileDialog.askopenfile(parent=self.window,
+                filetypes=[("JPEG",".jpg"),("PNG",".png")],
+                mode='r',title='Choose a file')
+        
+        if file is None : return
+
+        self.path = file.name
+        self.image = Image.open(self.path)
+        self.image = self.image.resize((160, 75),Image.BILINEAR)
+        self.image = self.image.convert("L") # convert to mono
+
+        self.imglabel = ImageTk.PhotoImage(file=self.path)
+        panel = tk.Label(self.image_frame, image = self.imglabel)
+        panel.pack(side = tk.BOTTOM, fill = "both", expand = "yes")
+
+    def convert_image(self) :
+        
+        if not self.image :
+            print "No image chosen yet!"
+            return
+
+        # The following strings represent 7 tonal ranges.
+        # For a given pixel tonal level, choose a character at random
+
+        greyscale = [
+            " ",
+            " ",
+            ".,-",
+            "_ivc=!/|\\~",
+            "gjez2]/(YL)t[+T7Vf",
+            "mdK4ZGbNDXY5P*Q",
+            "W8KMA",
+            "#%$"
+            ]
+
+        # these are the luminosity cut-off points for each
+        # of the 7 tonal levels. At the moment, these are 7 bands of even width
+
+        zonebounds=[36,72,108,144,180,216,252]
+
+        # build up str
+
+        s=""
+        for y in range(0,self.image.size[1]):
+            for x in range(0,self.image.size[0]):
+                lum=255-self.image.getpixel((x,y))
+                row=bisect(zonebounds,lum)
+                possibles=greyscale[row]
+                s+=possibles[random.randint(0,len(possibles)-1)]
+            s+="\n"
+
+        print s
+        fname = os.path.basename(self.path)
+        fname = re.sub(r"\..*","",fname)
+        out = open(fname+".txt","w")
+        out.write(s)
+        out.close()
+        return str
+
+
+
+if __name__ == '__main__':
+    
+    root = tk.Tk()  # Instantiate a root window
+    my_game = Img_to_ascii(root)
+    root.mainloop()  # Enter the main event loop
+
