@@ -2,10 +2,9 @@
 
 <head xmlns="https://www.w3.org/1999/xhtml" xmlns:og="https://ogp.me/ns#" xmlns:fb="https://www.facebook.com/2008/fbml">
 <title>WebGL - HOME</title>
-<!--meta http-equiv="content-type" content="text/html; charset=ISO-8859-1"-->
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" >
 
-<link rel="canonical" href="webgl_home.html">
+<!--link rel="canonical" href="webgl_home.html"-->
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <meta property="og:url"         content="https://lucapescatore88.github.io/webgl/webgl_home.html" />
@@ -24,7 +23,7 @@
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
 
 <div id="fb-root"></div>
 <script>(function(d, s, id) {
@@ -35,79 +34,7 @@
   fjs.parentNode.insertBefore(js, fjs);
 }(document, 'script', 'facebook-jssdk'));</script>
 
-<style>
-
-.circle-container {
-	position: relative;
-	width: 36em;
-	height: 24em;
-	padding: 2.8em; /*= 2em * 1.4 (2em = half the width of an img, 1.4 = sqrt(2))*/
-	border: dashed 1px;
-	border-radius: 50%;
-	margin: 1.75em auto 0;
-}
-.circle-container img {
-	display: block;
-	overflow: hidden;
-	position: absolute;
-	top: 50%; left: 50%;
-	width: 6em; height: 6em;
-	margin: -3em; /* 2em = 4em/2 */ /* half the width */
-}
-.circle-container div {
-	display: block;
-	overflow: hidden;
-	top: 50%; left: 50%;
-	width: 6em; height: 6em;
-	margin: -3em; /* 2em = 4em/2 */
-	text-align : center;
-	vertical-align: middle;
-	position: absolute;
-}
-.circle-container .caption {
-	visibility : hidden;
-	position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translateX(-50%) translateY(-50%);
-    font-size:15
-    px;
-}
-.circle-container div:hover img { 
-	opacity: 0.3; 
-}
-.circle-container div:hover .caption { 
-	/*padding-top : 25px;*/
-	visibility : visible;
-	text-align : center;
-	vertical-align: middle;
-	position: absolute;
-	font-weight: bold;
-	opacity: 1;
-}
-
-.center { display:table-cell; vertical-align:middle; transform: translate(-2em); }
-.deg0   { transform: translate(12em); } /* 12em = half the width of the wrapper */
-.deg45  { transform: rotate(45deg) translate(12em) rotate(-45deg); }
-.deg135 { transform: rotate(135deg) translate(12em) rotate(-135deg); }
-.deg180 { transform: translate(-12em); }
-.deg225 { transform: rotate(225deg) translate(12em) rotate(-225deg); }
-.deg315 { transform: rotate(315deg) translate(12em) rotate(-315deg); }
-
-/* sqrt(1./( (sin(angle)/ry)^2 + (cos(angle)/rx)^3)) */
-
-.odeg0   { transform: translate(18em); } /* 18em = half the width of the wrapper */
-.odeg36  { transform: rotate(36deg) translate(15.04em) rotate(-36deg); }
-.odeg72 { transform: rotate(72deg) translate(12.33em) rotate(-72deg); }
-.odeg108 { transform: rotate(108deg) translate(12.33em) rotate(-108deg); }
-.odeg144  { transform: rotate(144deg) translate(15.04em) rotate(-144deg); }
-.odeg180 { transform: rotate(180deg) translate(18em) rotate(-180deg); }
-.odeg216  { transform: rotate(216deg) translate(15.04em) rotate(-216deg); }
-.odeg252 { transform: rotate(252deg) translate(12.33em) rotate(-252deg); }
-.odeg288 { transform: rotate(288deg) translate(12.33em) rotate(-288deg); }
-.odeg324  { transform: rotate(324deg) translate(15.04em) rotate(-324deg); }
-
-</style>
+<link rel="stylesheet" href="webgl.css">
 
 <script type="text/javascript">
 
@@ -188,7 +115,7 @@ function drop(ev) {
 	<br>
 
 		<p style="margin-top:2.2em;font-weight:bold;text-align:center;text-decoration: underline;font-size:25px;">
-			<a href="http://pluca.web.cern.ch/pluca/webgl/webgl_image.html">Bonus: image processing with WebGL</a>
+			<a href="https://lucapescatore88.github.io/webgl/webgl_image.html">Bonus: image processing with WebGL</a>
 		</p>
 		<p style="margin-top:1em;margin-bottom:1em;"> I want to thank Tony Parisi who made 
 			<a href="http://learningwebgl.com/blog/?page_id=1217">this wonderful tutorial</a>
@@ -198,7 +125,7 @@ function drop(ev) {
    
 	<div style="display:table;width:100%;position:relative;">
 	<div class="fb-like" 
-		data-href="http://pluca.web.cern.ch/pluca/webgl/webgl_home.html" 
+		data-href="https://lucapescatore88.github.io/webgl/webgl_home.html" 
 		data-layout="standard" 
 		data-action="like" 
 		data-show-faces="true"
